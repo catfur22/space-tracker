@@ -36,7 +36,6 @@
         .brand {
             font-size: 19px;
             font-weight: 600;
-            letter-spacing: 0.4px;
         }
 
         .status {
@@ -44,7 +43,7 @@
             color: #aab5c1;
         }
 
-        .status span {
+        .status-dot {
             color: #68cf91;
         }
 
@@ -57,8 +56,8 @@
         aside {
             min-height: 0;
             overflow-y: auto;
-            background: #171e26;
             padding: 16px;
+            background: #171e26;
         }
 
         .left-panel {
@@ -77,15 +76,14 @@
 
         h3 {
             margin: 20px 0 10px;
-            font-size: 12px;
             color: #aab5c1;
+            font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.7px;
         }
 
         input,
-        select,
         button {
             width: 100%;
             padding: 10px;
@@ -112,9 +110,9 @@
 
         .filter-list {
             display: grid;
-            gap: 9px;
-            font-size: 13px;
+            gap: 10px;
             color: #c5ced8;
+            font-size: 13px;
         }
 
         .filter-list label {
@@ -130,9 +128,9 @@
         }
 
         .object-list {
-            margin-top: 12px;
             display: grid;
             gap: 5px;
+            margin-top: 12px;
         }
 
         .object-item {
@@ -162,14 +160,14 @@
             position: relative;
             min-width: 0;
             min-height: 0;
-            background: #dce3e8;
+            background: #171e26;
         }
 
         #map {
             width: 100%;
             height: 100%;
             min-height: 300px;
-            background: #dce3e8;
+            background: #171e26;
         }
 
         .map-status {
@@ -178,29 +176,30 @@
             bottom: 12px;
             left: 12px;
             padding: 8px 11px;
+            border-radius: 4px;
             background: rgba(20, 27, 35, 0.92);
             color: #dce5ed;
-            border-radius: 4px;
             font-size: 12px;
             pointer-events: none;
         }
 
-        .detail-empty {
-            color: #8795a3;
+        .detail-empty,
+        .loading {
+            color: #91a0ae;
             font-size: 13px;
             line-height: 1.5;
         }
 
         .detail-name {
+            margin-bottom: 5px;
             font-size: 17px;
             font-weight: 600;
-            margin-bottom: 5px;
         }
 
         .detail-id {
+            margin-bottom: 20px;
             color: #91a0ae;
             font-size: 12px;
-            margin-bottom: 20px;
         }
 
         .detail-row {
@@ -231,19 +230,9 @@
         }
 
         .count {
+            margin-top: 12px;
             color: #91a0ae;
             font-size: 12px;
-            margin-top: 12px;
-        }
-
-        .loading {
-            color: #91a0ae;
-            font-size: 13px;
-            padding: 12px 4px;
-        }
-
-        .leaflet-container {
-            font-family: Arial, sans-serif;
         }
 
         @media (max-width: 950px) {
@@ -291,7 +280,7 @@
     <header>
         <div class="brand">Space Tracker</div>
         <div class="status" id="connectionStatus">
-            <span>●</span> Connecting
+            Connecting...
         </div>
     </header>
 
@@ -312,24 +301,29 @@
                     <input type="checkbox" value="all" checked>
                     All objects
                 </label>
+
                 <label>
-                    <input type="checkbox" value="stations" checked>
+                    <input type="checkbox" value="stations">
                     Space stations
                 </label>
+
                 <label>
-                    <input type="checkbox" value="starlink" checked>
+                    <input type="checkbox" value="starlink">
                     Starlink
                 </label>
+
                 <label>
-                    <input type="checkbox" value="gps" checked>
+                    <input type="checkbox" value="gps">
                     GPS
                 </label>
+
                 <label>
-                    <input type="checkbox" value="weather" checked>
+                    <input type="checkbox" value="weather">
                     Weather
                 </label>
+
                 <label>
-                    <input type="checkbox" value="other" checked>
+                    <input type="checkbox" value="other">
                     Other
                 </label>
             </div>
@@ -348,7 +342,7 @@
         <section class="map-area">
             <div id="map"></div>
             <div class="map-status" id="mapStatus">
-                Loading map...
+                Loading map tiles...
             </div>
         </section>
 
@@ -378,27 +372,88 @@
 
         const mapStatus = document.getElementById("mapStatus");
 
-        const mapTiles = L.tileLayer(
-            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-            {
-                attribution: "&copy; OpenStreetMap contributors",
-                maxZoom: 19
+        let currentTileLayer = null;
+        let tileFailures = 0;
+        let tileSuccesses = 0;
+        let usingFallback = false;
+
+        function setMapStatus(message) {
+            mapStatus.textContent = message;
+        }
+
+        function createTileLayer(url, attribution) {
+            return L.tileLayer(url, {
+                attribution: attribution,
+                maxZoom: 19,
+                crossOrigin: true
+            });
+        }
+
+        function useFallbackMap() {
+            if (usingFallback) {
+                return;
             }
-        );
 
-        mapTiles.on("load", function () {
-            mapStatus.textContent = "Map loaded";
-        });
+            usingFallback = true;
 
-        mapTiles.on("tileerror", function () {
-            mapStatus.textContent = "Some map tiles could not load";
-        });
+            if (currentTileLayer) {
+                map.removeLayer(currentTileLayer);
+            }
 
-        mapTiles.addTo(map);
+            setMapStatus("Trying alternate map...");
+
+            currentTileLayer = createTileLayer(
+                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+                "Tiles &copy; Esri, HERE, Garmin, USGS"
+            );
+
+            currentTileLayer.on("tileload", function () {
+                setMapStatus("Map loaded · Esri");
+            });
+
+            currentTileLayer.on("tileerror", function () {
+                setMapStatus("Map provider could not load tiles");
+            });
+
+            currentTileLayer.addTo(map);
+        }
+
+        function startMap() {
+            currentTileLayer = createTileLayer(
+                "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                "&copy; OpenStreetMap contributors &copy; CARTO"
+            );
+
+            currentTileLayer.on("tileload", function () {
+                tileSuccesses++;
+
+                if (!usingFallback) {
+                    setMapStatus("Map loaded · CARTO");
+                }
+            });
+
+            currentTileLayer.on("tileerror", function () {
+                tileFailures++;
+
+                if (tileFailures >= 4 && tileSuccesses === 0) {
+                    useFallbackMap();
+                }
+            });
+
+            currentTileLayer.addTo(map);
+
+            setTimeout(function () {
+                if (tileSuccesses === 0 && !usingFallback) {
+                    useFallbackMap();
+                }
+            }, 4000);
+        }
+
+        startMap();
 
         let objects = [];
         let markers = new Map();
-        let selectedObject = null;
+        let selectedId = null;
         let trailLayer = null;
         let following = false;
 
@@ -460,73 +515,6 @@
             });
         }
 
-        function makeMarker(object) {
-            const marker = L.circleMarker(
-                [object.lat, object.lon],
-                {
-                    radius: 5,
-                    color: object.color,
-                    fillColor: object.color,
-                    fillOpacity: 0.9,
-                    weight: 1
-                }
-            );
-
-            marker.bindTooltip(object.name);
-
-            marker.on("click", function () {
-                selectObject(object.id);
-            });
-
-            return marker;
-        }
-
-        function updateMarkers() {
-            const visibleObjects = getVisibleObjects();
-            const visibleIds = new Set(
-                visibleObjects.map(object => object.id)
-            );
-
-            for (const [id, marker] of markers) {
-                if (!visibleIds.has(id)) {
-                    map.removeLayer(marker);
-                    markers.delete(id);
-                }
-            }
-
-            for (const object of visibleObjects) {
-                if (!Number.isFinite(object.lat) ||
-                    !Number.isFinite(object.lon)) {
-                    continue;
-                }
-
-                let marker = markers.get(object.id);
-
-                if (!marker) {
-                    marker = makeMarker(object);
-                    markers.set(object.id, marker);
-                    marker.addTo(map);
-                } else {
-                    marker.setLatLng([object.lat, object.lon]);
-                    marker.setStyle({
-                        color: object.color,
-                        fillColor: object.color
-                    });
-                }
-            }
-
-            if (selectedObject) {
-                const updated = objects.find(
-                    object => object.id === selectedObject.id
-                );
-
-                if (updated) {
-                    selectedObject = updated;
-                    showDetails(updated);
-                }
-            }
-        }
-
         function getVisibleObjects() {
             const search = document
                 .getElementById("search")
@@ -550,6 +538,76 @@
 
                 return matchesSearch && matchesCategory;
             });
+        }
+
+        function makeMarker(object) {
+            const marker = L.circleMarker(
+                [object.lat, object.lon],
+                {
+                    radius: 5,
+                    color: object.color,
+                    fillColor: object.color,
+                    fillOpacity: 0.9,
+                    weight: 1
+                }
+            );
+
+            marker.bindTooltip(object.name);
+
+            marker.on("click", function () {
+                selectObject(object.id);
+            });
+
+            return marker;
+        }
+
+        function updateMarkers() {
+            const visibleObjects = getVisibleObjects();
+
+            const visibleIds = new Set(
+                visibleObjects.map(object => object.id)
+            );
+
+            for (const [id, marker] of markers) {
+                if (!visibleIds.has(id)) {
+                    map.removeLayer(marker);
+                    markers.delete(id);
+                }
+            }
+
+            for (const object of visibleObjects) {
+                if (
+                    !Number.isFinite(object.lat) ||
+                    !Number.isFinite(object.lon)
+                ) {
+                    continue;
+                }
+
+                let marker = markers.get(object.id);
+
+                if (!marker) {
+                    marker = makeMarker(object);
+                    markers.set(object.id, marker);
+                    marker.addTo(map);
+                } else {
+                    marker.setLatLng([object.lat, object.lon]);
+
+                    marker.setStyle({
+                        color: object.color,
+                        fillColor: object.color
+                    });
+                }
+            }
+
+            if (selectedId) {
+                const updated = objects.find(
+                    object => object.id === selectedId
+                );
+
+                if (updated) {
+                    showDetails(updated);
+                }
+            }
         }
 
         function updateList() {
@@ -576,10 +634,7 @@
 
                 item.className = "object-item";
 
-                if (
-                    selectedObject &&
-                    selectedObject.id === object.id
-                ) {
+                if (selectedId === object.id) {
                     item.classList.add("selected");
                 }
 
@@ -602,6 +657,21 @@
             list.appendChild(fragment);
         }
 
+        function addDetailRow(container, label, value) {
+            const row = document.createElement("div");
+            row.className = "detail-row";
+
+            const left = document.createElement("span");
+            left.textContent = label;
+
+            const right = document.createElement("span");
+            right.textContent = value;
+
+            row.appendChild(left);
+            row.appendChild(right);
+            container.appendChild(row);
+        }
+
         function showDetails(object) {
             const details = document.getElementById("details");
 
@@ -618,28 +688,27 @@
             details.appendChild(name);
             details.appendChild(id);
 
-            const rows = [
-                ["Category", object.category],
-                ["Latitude", formatNumber(object.lat, 5) + "°"],
-                ["Longitude", formatNumber(object.lon, 5) + "°"],
-                ["Altitude", formatNumber(object.altitude) + " km"],
-                ["Velocity", formatNumber(object.velocity, 3) + " km/s"]
-            ];
-
-            rows.forEach(([label, value]) => {
-                const row = document.createElement("div");
-                row.className = "detail-row";
-
-                const left = document.createElement("span");
-                left.textContent = label;
-
-                const right = document.createElement("span");
-                right.textContent = value;
-
-                row.appendChild(left);
-                row.appendChild(right);
-                details.appendChild(row);
-            });
+            addDetailRow(details, "Category", object.category);
+            addDetailRow(
+                details,
+                "Latitude",
+                formatNumber(object.lat, 5) + "°"
+            );
+            addDetailRow(
+                details,
+                "Longitude",
+                formatNumber(object.lon, 5) + "°"
+            );
+            addDetailRow(
+                details,
+                "Altitude",
+                formatNumber(object.altitude) + " km"
+            );
+            addDetailRow(
+                details,
+                "Velocity",
+                formatNumber(object.velocity, 3) + " km/s"
+            );
 
             const actions = document.createElement("div");
             actions.className = "detail-actions";
@@ -690,7 +759,7 @@
                 return;
             }
 
-            selectedObject = object;
+            selectedId = object.id;
             following = false;
 
             updateList();
@@ -705,12 +774,6 @@
         function showTrail(object) {
             clearTrail();
 
-            if (!object.orbit || object.orbit.length < 2) {
-                mapStatus.textContent =
-                    "No orbital trail data available for this object";
-                return;
-            }
-
             const points = object.orbit
                 .filter(point =>
                     Array.isArray(point) &&
@@ -723,22 +786,21 @@
                 ]);
 
             if (points.length < 2) {
-                mapStatus.textContent =
-                    "Not enough trail points available";
+                setMapStatus("No orbital trail data available");
                 return;
             }
 
             trailLayer = L.polyline(points, {
                 color: object.color,
                 weight: 2,
-                opacity: 0.8
+                opacity: 0.85
             }).addTo(map);
 
             map.fitBounds(trailLayer.getBounds(), {
                 padding: [35, 35]
             });
 
-            mapStatus.textContent = "Showing orbital trail";
+            setMapStatus("Showing orbital trail");
         }
 
         function clearTrail() {
@@ -747,7 +809,11 @@
                 trailLayer = null;
             }
 
-            mapStatus.textContent = "Map loaded";
+            if (usingFallback) {
+                setMapStatus("Map loaded · Esri");
+            } else {
+                setMapStatus("Map loaded · CARTO");
+            }
         }
 
         async function loadObjects() {
@@ -759,7 +825,9 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error("Server returned " + response.status);
+                    throw new Error(
+                        "Server returned " + response.status
+                    );
                 }
 
                 const data = await response.json();
@@ -780,15 +848,14 @@
                 updateList();
 
                 status.innerHTML =
-                    '<span>●</span> Connected · ' +
+                    '<span class="status-dot">●</span> Connected · ' +
                     objects.length.toLocaleString() +
                     " objects";
 
             } catch (error) {
                 console.error("Satellite data error:", error);
 
-                status.innerHTML =
-                    '<span style="color:#e58b80">●</span> Data unavailable';
+                status.textContent = "Satellite data unavailable";
 
                 document.getElementById("objectList").innerHTML =
                     '<div class="loading">Could not load satellite data. Check the browser console for details.</div>';
@@ -805,30 +872,28 @@
 
         document.querySelectorAll(".filter-list input").forEach(input => {
             input.addEventListener("change", function () {
-                if (input.value === "all" && input.checked) {
-                    document.querySelectorAll(
-                        '.filter-list input:not([value="all"])'
-                    ).forEach(other => {
-                        other.checked = false;
-                    });
-                } else if (input.value !== "all" && input.checked) {
-                    document.querySelector(
-                        '.filter-list input[value="all"]'
-                    ).checked = false;
-                }
+                const allInput = document.querySelector(
+                    '.filter-list input[value="all"]'
+                );
 
-                const allFilters = document.querySelectorAll(
+                const categoryInputs = document.querySelectorAll(
                     '.filter-list input:not([value="all"])'
                 );
 
-                const allChecked = Array.from(allFilters).every(
-                    filter => filter.checked
-                );
+                if (input.value === "all" && input.checked) {
+                    categoryInputs.forEach(item => {
+                        item.checked = false;
+                    });
+                } else if (input.value !== "all") {
+                    allInput.checked = false;
 
-                if (allChecked) {
-                    document.querySelector(
-                        '.filter-list input[value="all"]'
-                    ).checked = true;
+                    const allChecked = Array.from(categoryInputs).every(
+                        item => item.checked
+                    );
+
+                    if (allChecked) {
+                        allInput.checked = true;
+                    }
                 }
 
                 updateList();
@@ -838,7 +903,6 @@
 
         map.whenReady(function () {
             map.invalidateSize();
-            mapStatus.textContent = "Map ready";
         });
 
         window.addEventListener("resize", function () {
@@ -850,19 +914,19 @@
         setInterval(loadObjects, REFRESH_INTERVAL);
 
         setInterval(function () {
-            if (following && selectedObject) {
-                const updated = objects.find(
-                    object => object.id === selectedObject.id
+            if (!following || !selectedId) {
+                return;
+            }
+
+            const object = objects.find(
+                item => item.id === selectedId
+            );
+
+            if (object) {
+                map.panTo(
+                    [object.lat, object.lon],
+                    { animate: true }
                 );
-
-                if (updated) {
-                    selectedObject = updated;
-
-                    map.panTo(
-                        [updated.lat, updated.lon],
-                        { animate: true }
-                    );
-                }
             }
         }, 2000);
     </script>
