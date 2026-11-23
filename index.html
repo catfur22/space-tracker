@@ -2,498 +2,869 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Space Tracker</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<style>
-*{box-sizing:border-box}
-body{margin:0;background:#101419;color:#e6e9ed;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
-button,input{font:inherit}
-.topbar{height:58px;background:#171d24;border-bottom:1px solid #303943;display:flex;align-items:center;padding:0 20px;gap:22px}
-.brand{font-size:17px;font-weight:700;letter-spacing:2px}
-.brand span{color:#8cb9d8}
-.status{font-size:12px;color:#9ba8b4;display:flex;align-items:center;gap:8px}
-.dot{width:8px;height:8px;border-radius:50%;background:#727e89}
-.dot.live{background:#57c98a}
-.topright{margin-left:auto;font-size:12px;color:#9ba8b4}
-.layout{height:calc(100vh - 58px);display:grid;grid-template-columns:285px minmax(0,1fr) 280px}
-.panel{background:#171d24;min-height:0;overflow:hidden}
-.left{border-right:1px solid #303943;display:flex;flex-direction:column}
-.right{border-left:1px solid #303943;padding:18px;overflow-y:auto}
-.panelhead{padding:17px 16px 12px;border-bottom:1px solid #303943}
-.paneltitle{font-size:11px;font-weight:bold;letter-spacing:1.4px;color:#8d9aa7}
-.search{width:100%;margin-top:13px;background:#10161c;border:1px solid #39444f;border-radius:4px;padding:10px;color:#e6e9ed;outline:none}
-.search:focus{border-color:#83b8d9}
-.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
-.filter{background:#222b34;border:1px solid #39444f;color:#aebac5;border-radius:3px;padding:6px 8px;font-size:11px;cursor:pointer}
-.filter.active{background:#30485b;border-color:#668ba6;color:#fff}
-.object-count{padding:12px 16px;color:#8d9aa7;font-size:11px;border-bottom:1px solid #303943}
-.object-list{overflow-y:auto;flex:1}
-.object{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;background:none;border:0;border-bottom:1px solid #252e37;color:#e6e9ed;cursor:pointer}
-.object:hover{background:#202a34}
-.object.selected{background:#263746}
-.object-color{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.object-info{min-width:0;flex:1}
-.object-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.object-id{font-size:10px;color:#84919d;margin-top:4px}
-.object-alt{font-size:10px;color:#9ba8b4;white-space:nowrap}
-.mapwrap{position:relative;min-width:0;min-height:0;background:#0d141a}
-#map{height:100%;width:100%;background:#101820}
-.map-controls{position:absolute;z-index:500;top:14px;left:14px;display:flex;gap:7px}
-.control{background:#18232d;border:1px solid #43515d;color:#dce4eb;padding:9px 12px;border-radius:3px;font-size:11px;cursor:pointer}
-.control:hover{background:#293b4a}
-.map-note{position:absolute;bottom:12px;left:12px;z-index:500;background:#17212bdc;padding:7px 10px;color:#9eabb7;font-size:10px;border:1px solid #34414c}
-.detail-title{font-size:11px;letter-spacing:1.4px;color:#8d9aa7;font-weight:bold;margin-bottom:20px}
-.empty{color:#7f8c98;font-size:12px;line-height:1.6}
-.selected-name{font-size:19px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
-.selected-id{font-size:11px;color:#8d9aa7;margin-top:7px}
-.detail-rule{height:1px;background:#303943;margin:18px 0}
-.detail-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #29323b;font-size:12px}
-.detail-row span:first-child{color:#8996a2}
-.detail-row span:last-child{text-align:right;color:#e4e9ee;font-variant-numeric:tabular-nums}
-.detail-actions{display:flex;gap:7px;margin-top:18px}
-.detail-actions button{flex:1}
-.small-note{font-size:10px;color:#788691;line-height:1.6;margin-top:18px}
-.error{color:#e7a18e}
-.leaflet-container{font-family:Arial,Helvetica,sans-serif}
-.leaflet-control-attribution{font-size:9px!important}
-@media(max-width:900px){
-.layout{grid-template-columns:230px minmax(0,1fr)}
-.right{display:none}
-}
-@media(max-width:600px){
-body{overflow:auto}
-.topbar{height:52px;padding:0 12px}
-.topright{display:none}
-.layout{height:calc(100vh - 52px);grid-template-columns:1fr;grid-template-rows:42% 58%}
-.left{grid-row:2;border-right:0;border-top:1px solid #303943}
-.mapwrap{grid-row:1}
-.map-controls{top:8px;left:8px}
-.control{padding:7px 9px}
-.panelhead{padding:10px 12px}
-.object-count{padding:8px 12px}
-.object{padding:9px 12px}
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Tracker</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: #10151b;
+            color: #e5eaf0;
+            font-family: Arial, sans-serif;
+        }
+
+        header {
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 22px;
+            background: #171e26;
+            border-bottom: 1px solid #303943;
+        }
+
+        .brand {
+            font-size: 19px;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+        }
+
+        .status {
+            font-size: 12px;
+            color: #aab5c1;
+        }
+
+        .status span {
+            color: #68cf91;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 260px minmax(0, 1fr) 280px;
+            height: calc(100vh - 58px);
+        }
+
+        aside {
+            min-height: 0;
+            overflow-y: auto;
+            background: #171e26;
+            padding: 16px;
+        }
+
+        .left-panel {
+            border-right: 1px solid #303943;
+        }
+
+        .right-panel {
+            border-left: 1px solid #303943;
+        }
+
+        h2 {
+            margin: 0 0 14px;
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        h3 {
+            margin: 20px 0 10px;
+            font-size: 12px;
+            color: #aab5c1;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #394550;
+            border-radius: 4px;
+            background: #111820;
+            color: #e5eaf0;
+            font-size: 13px;
+        }
+
+        input {
+            margin-bottom: 9px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #263747;
+            border-color: #405568;
+        }
+
+        button:hover {
+            background: #334a60;
+        }
+
+        .filter-list {
+            display: grid;
+            gap: 9px;
+            font-size: 13px;
+            color: #c5ced8;
+        }
+
+        .filter-list label {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            cursor: pointer;
+        }
+
+        .filter-list input {
+            width: auto;
+            margin: 0;
+        }
+
+        .object-list {
+            margin-top: 12px;
+            display: grid;
+            gap: 5px;
+        }
+
+        .object-item {
+            padding: 10px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .object-item:hover {
+            background: #222d38;
+        }
+
+        .object-item.selected {
+            background: #263747;
+            border-color: #506b82;
+        }
+
+        .object-item small {
+            display: block;
+            margin-top: 5px;
+            color: #8f9daa;
+        }
+
+        .map-area {
+            position: relative;
+            min-width: 0;
+            min-height: 0;
+            background: #dce3e8;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            min-height: 300px;
+            background: #dce3e8;
+        }
+
+        .map-status {
+            position: absolute;
+            z-index: 500;
+            bottom: 12px;
+            left: 12px;
+            padding: 8px 11px;
+            background: rgba(20, 27, 35, 0.92);
+            color: #dce5ed;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+        }
+
+        .detail-empty {
+            color: #8795a3;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .detail-name {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .detail-id {
+            color: #91a0ae;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 11px 0;
+            border-bottom: 1px solid #303943;
+            font-size: 13px;
+        }
+
+        .detail-row span:first-child {
+            color: #91a0ae;
+        }
+
+        .detail-row span:last-child {
+            text-align: right;
+        }
+
+        .detail-actions {
+            display: grid;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .secondary {
+            background: #171e26;
+        }
+
+        .count {
+            color: #91a0ae;
+            font-size: 12px;
+            margin-top: 12px;
+        }
+
+        .loading {
+            color: #91a0ae;
+            font-size: 13px;
+            padding: 12px 4px;
+        }
+
+        .leaflet-container {
+            font-family: Arial, sans-serif;
+        }
+
+        @media (max-width: 950px) {
+            main {
+                grid-template-columns: 220px minmax(0, 1fr);
+            }
+
+            .right-panel {
+                display: none;
+            }
+        }
+
+        @media (max-width: 650px) {
+            header {
+                padding: 0 12px;
+            }
+
+            main {
+                grid-template-columns: 1fr;
+                grid-template-rows: 230px minmax(0, 1fr);
+                height: calc(100vh - 58px);
+            }
+
+            .left-panel {
+                border-right: none;
+                border-bottom: 1px solid #303943;
+            }
+
+            .map-area {
+                grid-row: 2;
+            }
+
+            aside {
+                padding: 12px;
+            }
+
+            .object-list {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+    </style>
 </head>
+
 <body>
-<header class="topbar">
-  <div class="brand">SPACE <span>TRACKER</span></div>
-  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">CONNECTING</span></div>
-  <div class="topright" id="updated">Waiting for data</div>
-</header>
-
-<main class="layout">
-  <aside class="panel left">
-    <div class="panelhead">
-      <div class="paneltitle">TRACKED OBJECTS</div>
-      <input class="search" id="search" placeholder="Search name or NORAD ID..." autocomplete="off">
-      <div class="filters" id="filters">
-        <button class="filter active" data-filter="all">All</button>
-        <button class="filter" data-filter="station">Stations</button>
-        <button class="filter" data-filter="starlink">Starlink</button>
-        <button class="filter" data-filter="gps">GPS</button>
-        <button class="filter" data-filter="weather">Weather</button>
-        <button class="filter" data-filter="other">Other</button>
-      </div>
-    </div>
-    <div class="object-count" id="objectCount">Loading objects...</div>
-    <div class="object-list" id="objectList"></div>
-  </aside>
-
-  <section class="mapwrap">
-    <div id="map"></div>
-    <div class="map-controls">
-      <button class="control" id="worldBtn">World view</button>
-      <button class="control" id="followBtn">Follow: OFF</button>
-      <button class="control" id="refreshBtn">Refresh</button>
-    </div>
-    <div class="map-note">Positions supplied by Orbiting Frog</div>
-  </section>
-
-  <aside class="panel right">
-    <div class="detail-title">OBJECT INFORMATION</div>
-    <div id="details" class="empty">Select an object on the map or in the list to inspect it.</div>
-  </aside>
-</main>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-const CARTO_KEY = "cb1_5e6t_1_97d50199389ca4dc8f19c1b6";
-const API = "https://satellites.orbitingfrog.com/api/positions?group=visual";
-const REFRESH_MS = 30000;
-
-const map = L.map("map", {
-  worldCopyJump: true,
-  minZoom: 2,
-  maxZoom: 9
-}).setView([20, 0], 2);
-
-L.tileLayer(
-  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=" + encodeURIComponent(CARTO_KEY),
-  {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
-    subdomains: "abcd",
-    maxZoom: 19
-  }
-).addTo(map);
-
-const markerLayer = L.layerGroup().addTo(map);
-const trailLayer = L.layerGroup().addTo(map);
-
-let objects = [];
-let selectedId = null;
-let activeFilter = "all";
-let searchText = "";
-let follow = false;
-let loading = false;
-
-const $ = id => document.getElementById(id);
-
-function setStatus(text, live, error = false) {
-  $("statusText").textContent = text;
-  $("statusDot").className = "dot" + (live ? " live" : "");
-  $("statusText").className = error ? "error" : "";
-}
-
-function classify(item) {
-  const n = item.name.toLowerCase();
-  if (/starlink/.test(n)) return "starlink";
-  if (/gps|navstar/.test(n)) return "gps";
-  if (/iss|tiangong|soyuz|space station|crew dragon/.test(n)) return "station";
-  if (/noaa|goes|meteosat|weather|fengyun|himawari/.test(n)) return "weather";
-  return "other";
-}
-
-function normalize(item) {
-  if (!item || item.lat === undefined || item.lon === undefined) return null;
-
-  const lat = Number(item.lat);
-  const lon = Number(item.lon);
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
-
-  return {
-    id: String(item.noradId ?? item.id ?? ""),
-    name: String(item.name || "Unknown object"),
-    lat,
-    lon,
-    altitude: Number(item.alt),
-    velocity: Number(item.velocity),
-    color: /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : "#8cb9d8",
-    orbit: Array.isArray(item.orbit) ? item.orbit : [],
-    category: classify(item)
-  };
-}
-
-function formatNumber(value, digits = 1) {
-  return Number.isFinite(value) ? value.toLocaleString("en-US", {
-    maximumFractionDigits: digits
-  }) : "Not provided";
-}
-
-function altitudeText(value) {
-  return Number.isFinite(value) ? formatNumber(value) + " km" : "Not provided";
-}
-
-function speedText(value) {
-  return Number.isFinite(value) ? formatNumber(value, 3) + " km/s" : "Not provided";
-}
-
-function visibleObjects() {
-  return objects.filter(item => {
-    const matchesFilter = activeFilter === "all" || item.category === activeFilter;
-    const matchesSearch = !searchText ||
-      item.name.toLowerCase().includes(searchText) ||
-      item.id.toLowerCase().includes(searchText);
-    return matchesFilter && matchesSearch;
-  });
-}
-
-function makeMarker(item) {
-  const isSelected = item.id === selectedId;
-  return L.circleMarker([item.lat, item.lon], {
-    radius: isSelected ? 7 : 4,
-    color: isSelected ? "#ffffff" : item.color,
-    weight: isSelected ? 2 : 1,
-    fillColor: item.color,
-    fillOpacity: 0.95
-  }).on("click", () => selectObject(item.id));
-}
-
-function renderMap() {
-  markerLayer.clearLayers();
-  for (const item of visibleObjects()) {
-    makeMarker(item).addTo(markerLayer);
-  }
-}
-
-function renderList() {
-  const shown = visibleObjects();
-  $("objectCount").textContent =
-    shown.length.toLocaleString() + " objects shown · " +
-    objects.length.toLocaleString() + " received";
-
-  const list = $("objectList");
-  list.replaceChildren();
-
-  if (!shown.length) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.style.padding = "18px";
-    empty.textContent = objects.length ? "No objects match your search." : "No object data available.";
-    list.appendChild(empty);
-    return;
-  }
-
-  const fragment = document.createDocumentFragment();
-
-  for (const item of shown) {
-    const button = document.createElement("button");
-    button.className = "object" + (item.id === selectedId ? " selected" : "");
-    button.type = "button";
-
-    const color = document.createElement("span");
-    color.className = "object-color";
-    color.style.background = item.color;
-
-    const info = document.createElement("span");
-    info.className = "object-info";
-
-    const name = document.createElement("div");
-    name.className = "object-name";
-    name.textContent = item.name;
-
-    const id = document.createElement("div");
-    id.className = "object-id";
-    id.textContent = "NORAD " + (item.id || "Unknown");
-
-    info.append(name, id);
-
-    const alt = document.createElement("span");
-    alt.className = "object-alt";
-    alt.textContent = Number.isFinite(item.altitude) ? Math.round(item.altitude) + " km" : "";
-
-    button.append(color, info, alt);
-    button.addEventListener("click", () => selectObject(item.id));
-    fragment.appendChild(button);
-  }
-
-  list.appendChild(fragment);
-}
-
-function drawTrail(item) {
-  trailLayer.clearLayers();
-  if (!item || !item.orbit.length) return;
-
-  let segment = [];
-  const segments = [];
-
-  for (const point of item.orbit) {
-    if (!Array.isArray(point) || point.length < 2) continue;
-
-    const lat = Number(point[0]);
-    const lon = Number(point[1]);
-
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
-    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) continue;
-
-    if (segment.length && Math.abs(lon - segment[segment.length - 1][1]) > 180) {
-      if (segment.length > 1) segments.push(segment);
-      segment = [];
-    }
-    segment.push([lat, lon]);
-  }
-
-  if (segment.length > 1) segments.push(segment);
-
-  for (const points of segments) {
-    L.polyline(points, {
-      color: item.color,
-      weight: 2,
-      opacity: 0.8,
-      dashArray: "5 6"
-    }).addTo(trailLayer);
-  }
-}
-
-function renderDetails(item) {
-  const panel = $("details");
-
-  if (!item) {
-    panel.className = "empty";
-    panel.textContent = "Select an object on the map or in the list to inspect it.";
-    return;
-  }
-
-  panel.className = "";
-
-  const title = document.createElement("div");
-  title.className = "selected-name";
-  title.textContent = item.name;
-
-  const id = document.createElement("div");
-  id.className = "selected-id";
-  id.textContent = "NORAD ID: " + (item.id || "Not provided");
-
-  panel.replaceChildren(title, id);
-
-  const rule = document.createElement("div");
-  rule.className = "detail-rule";
-  panel.appendChild(rule);
-
-  const rows = [
-    ["Category", item.category.charAt(0).toUpperCase() + item.category.slice(1)],
-    ["Altitude", altitudeText(item.altitude)],
-    ["Velocity", speedText(item.velocity)],
-    ["Latitude", formatNumber(item.lat, 5) + "°"],
-    ["Longitude", formatNumber(item.lon, 5) + "°"],
-    ["Orbit points", String(item.orbit.length)]
-  ];
-
-  for (const [label, value] of rows) {
-    const row = document.createElement("div");
-    row.className = "detail-row";
-    const left = document.createElement("span");
-    left.textContent = label;
-    const right = document.createElement("span");
-    right.textContent = value;
-    row.append(left, right);
-    panel.appendChild(row);
-  }
-
-  const actions = document.createElement("div");
-  actions.className = "detail-actions";
-
-  const center = document.createElement("button");
-  center.className = "control";
-  center.textContent = "Center map";
-  center.addEventListener("click", () => {
-    map.setView([item.lat, item.lon], Math.max(map.getZoom(), 4));
-  });
-
-  const trail = document.createElement("button");
-  trail.className = "control";
-  trail.textContent = "Show trail";
-  trail.addEventListener("click", () => drawTrail(item));
-
-  actions.append(center, trail);
-  panel.appendChild(actions);
-
-  const note = document.createElement("div");
-  note.className = "small-note";
-  note.textContent = "Telemetry and orbit points are supplied by the data provider. Orbital inclination is not included in this feed.";
-  panel.appendChild(note);
-}
-
-function selectObject(id) {
-  const item = objects.find(object => object.id === id);
-  if (!item) return;
-
-  selectedId = id;
-  renderMap();
-  renderList();
-  renderDetails(item);
-  drawTrail(item);
-
-  if (follow) map.panTo([item.lat, item.lon]);
-}
-
-async function loadData() {
-  if (loading) return;
-  loading = true;
-  $("refreshBtn").textContent = "Loading...";
-  setStatus("CONNECTING", false);
-
-  try {
-    const response = await fetch(API, {
-      method: "GET",
-      headers: { "Accept": "application/json" },
-      cache: "no-store"
-    });
-
-    if (!response.ok) throw new Error("API returned HTTP " + response.status);
-
-    const data = await response.json();
-    if (!Array.isArray(data)) throw new Error("Unexpected API response: expected a JSON array");
-
-    const normalized = data.map(normalize).filter(Boolean);
-    if (!normalized.length) throw new Error("The API returned no usable position records");
-
-    objects = normalized;
-    setStatus("LIVE", true);
-    $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
-
-    if (selectedId && objects.some(item => item.id === selectedId)) {
-      const selected = objects.find(item => item.id === selectedId);
-      renderDetails(selected);
-      drawTrail(selected);
-      if (follow) map.panTo([selected.lat, selected.lon]);
-    } else if (selectedId) {
-      selectedId = null;
-      trailLayer.clearLayers();
-      renderDetails(null);
-    }
-
-    renderMap();
-    renderList();
-
-  } catch (error) {
-    console.error("Space Tracker data error:", error);
-    setStatus("DATA ERROR", false, true);
-    $("updated").textContent = error.message.includes("Failed to fetch")
-      ? "Browser blocked the request"
-      : error.message;
-
-    if (!objects.length) {
-      $("objectCount").textContent = "Unable to load live data";
-      $("objectList").innerHTML =
-        '<div class="empty" style="padding:16px">Could not connect to the satellite feed.<br><br>' +
-        'If the browser reports a CORS or network error, the API is blocking this website from reading its data. Opening the API URL directly does not prove JavaScript requests are allowed.</div>';
-    }
-  } finally {
-    loading = false;
-    $("refreshBtn").textContent = "Refresh";
-  }
-}
-
-$("search").addEventListener("input", event => {
-  searchText = event.target.value.trim().toLowerCase();
-  renderList();
-  renderMap();
-});
-
-$("filters").addEventListener("click", event => {
-  const button = event.target.closest("[data-filter]");
-  if (!button) return;
-
-  activeFilter = button.dataset.filter;
-  document.querySelectorAll(".filter").forEach(element => {
-    element.classList.toggle("active", element === button);
-  });
-
-  renderList();
-  renderMap();
-});
-
-$("worldBtn").addEventListener("click", () => map.setView([20, 0], 2));
-
-$("followBtn").addEventListener("click", () => {
-  follow = !follow;
-  $("followBtn").textContent = "Follow: " + (follow ? "ON" : "OFF");
-
-  if (follow && selectedId) {
-    const item = objects.find(object => object.id === selectedId);
-    if (item) map.panTo([item.lat, item.lon]);
-  }
-});
-
-$("refreshBtn").addEventListener("click", loadData);
-
-loadData();
-setInterval(loadData, REFRESH_MS);
-</script>
+    <header>
+        <div class="brand">Space Tracker</div>
+        <div class="status" id="connectionStatus">
+            <span>●</span> Connecting
+        </div>
+    </header>
+
+    <main>
+        <aside class="left-panel">
+            <h2>Objects</h2>
+
+            <input
+                type="text"
+                id="search"
+                placeholder="Search name or NORAD ID..."
+            >
+
+            <h3>Categories</h3>
+
+            <div class="filter-list">
+                <label>
+                    <input type="checkbox" value="all" checked>
+                    All objects
+                </label>
+                <label>
+                    <input type="checkbox" value="stations" checked>
+                    Space stations
+                </label>
+                <label>
+                    <input type="checkbox" value="starlink" checked>
+                    Starlink
+                </label>
+                <label>
+                    <input type="checkbox" value="gps" checked>
+                    GPS
+                </label>
+                <label>
+                    <input type="checkbox" value="weather" checked>
+                    Weather
+                </label>
+                <label>
+                    <input type="checkbox" value="other" checked>
+                    Other
+                </label>
+            </div>
+
+            <h3>Tracked objects</h3>
+
+            <div class="count" id="objectCount">
+                Loading objects...
+            </div>
+
+            <div class="object-list" id="objectList">
+                <div class="loading">Loading satellite data...</div>
+            </div>
+        </aside>
+
+        <section class="map-area">
+            <div id="map"></div>
+            <div class="map-status" id="mapStatus">
+                Loading map...
+            </div>
+        </section>
+
+        <aside class="right-panel">
+            <h2>Object information</h2>
+
+            <div id="details">
+                <div class="detail-empty">
+                    Select an object on the map or from the list to see its information.
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <script>
+        const API_URL =
+            "https://satellites.orbitingfrog.com/api/positions?group=visual";
+
+        const REFRESH_INTERVAL = 15000;
+
+        const map = L.map("map", {
+            worldCopyJump: true,
+            zoomControl: true
+        }).setView([20, 0], 2);
+
+        const mapStatus = document.getElementById("mapStatus");
+
+        const mapTiles = L.tileLayer(
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+            {
+                attribution: "&copy; OpenStreetMap contributors",
+                maxZoom: 19
+            }
+        );
+
+        mapTiles.on("load", function () {
+            mapStatus.textContent = "Map loaded";
+        });
+
+        mapTiles.on("tileerror", function () {
+            mapStatus.textContent = "Some map tiles could not load";
+        });
+
+        mapTiles.addTo(map);
+
+        let objects = [];
+        let markers = new Map();
+        let selectedObject = null;
+        let trailLayer = null;
+        let following = false;
+
+        function getCategory(name) {
+            const value = name.toLowerCase();
+
+            if (
+                value.includes("iss") ||
+                value.includes("tiangong") ||
+                value.includes("space station")
+            ) {
+                return "stations";
+            }
+
+            if (value.includes("starlink")) {
+                return "starlink";
+            }
+
+            if (
+                value.includes("gps") ||
+                value.includes("navstar")
+            ) {
+                return "gps";
+            }
+
+            if (
+                value.includes("weather") ||
+                value.includes("noaa") ||
+                value.includes("goes") ||
+                value.includes("meteor")
+            ) {
+                return "weather";
+            }
+
+            return "other";
+        }
+
+        function normalizeObject(item) {
+            return {
+                id: String(item.noradId ?? item.id ?? ""),
+                name: String(item.name || "Unknown object"),
+                lat: Number(item.lat),
+                lon: Number(item.lon),
+                altitude: Number(item.alt),
+                velocity: Number(item.velocity),
+                color: item.color || "#4d9bd3",
+                orbit: Array.isArray(item.orbit) ? item.orbit : [],
+                category: getCategory(String(item.name || ""))
+            };
+        }
+
+        function formatNumber(value, digits = 2) {
+            if (!Number.isFinite(value)) {
+                return "Unavailable";
+            }
+
+            return value.toLocaleString(undefined, {
+                maximumFractionDigits: digits
+            });
+        }
+
+        function makeMarker(object) {
+            const marker = L.circleMarker(
+                [object.lat, object.lon],
+                {
+                    radius: 5,
+                    color: object.color,
+                    fillColor: object.color,
+                    fillOpacity: 0.9,
+                    weight: 1
+                }
+            );
+
+            marker.bindTooltip(object.name);
+
+            marker.on("click", function () {
+                selectObject(object.id);
+            });
+
+            return marker;
+        }
+
+        function updateMarkers() {
+            const visibleObjects = getVisibleObjects();
+            const visibleIds = new Set(
+                visibleObjects.map(object => object.id)
+            );
+
+            for (const [id, marker] of markers) {
+                if (!visibleIds.has(id)) {
+                    map.removeLayer(marker);
+                    markers.delete(id);
+                }
+            }
+
+            for (const object of visibleObjects) {
+                if (!Number.isFinite(object.lat) ||
+                    !Number.isFinite(object.lon)) {
+                    continue;
+                }
+
+                let marker = markers.get(object.id);
+
+                if (!marker) {
+                    marker = makeMarker(object);
+                    markers.set(object.id, marker);
+                    marker.addTo(map);
+                } else {
+                    marker.setLatLng([object.lat, object.lon]);
+                    marker.setStyle({
+                        color: object.color,
+                        fillColor: object.color
+                    });
+                }
+            }
+
+            if (selectedObject) {
+                const updated = objects.find(
+                    object => object.id === selectedObject.id
+                );
+
+                if (updated) {
+                    selectedObject = updated;
+                    showDetails(updated);
+                }
+            }
+        }
+
+        function getVisibleObjects() {
+            const search = document
+                .getElementById("search")
+                .value
+                .trim()
+                .toLowerCase();
+
+            const checked = Array.from(
+                document.querySelectorAll(".filter-list input:checked")
+            ).map(input => input.value);
+
+            const showAll = checked.includes("all");
+
+            return objects.filter(object => {
+                const matchesSearch =
+                    object.name.toLowerCase().includes(search) ||
+                    object.id.toLowerCase().includes(search);
+
+                const matchesCategory =
+                    showAll || checked.includes(object.category);
+
+                return matchesSearch && matchesCategory;
+            });
+        }
+
+        function updateList() {
+            const list = document.getElementById("objectList");
+            const count = document.getElementById("objectCount");
+
+            const visibleObjects = getVisibleObjects();
+
+            count.textContent =
+                visibleObjects.length.toLocaleString() + " objects shown";
+
+            list.innerHTML = "";
+
+            if (visibleObjects.length === 0) {
+                list.innerHTML =
+                    '<div class="loading">No matching objects.</div>';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            visibleObjects.slice(0, 300).forEach(object => {
+                const item = document.createElement("div");
+
+                item.className = "object-item";
+
+                if (
+                    selectedObject &&
+                    selectedObject.id === object.id
+                ) {
+                    item.classList.add("selected");
+                }
+
+                const name = document.createElement("div");
+                name.textContent = object.name;
+
+                const id = document.createElement("small");
+                id.textContent = "NORAD " + object.id;
+
+                item.appendChild(name);
+                item.appendChild(id);
+
+                item.addEventListener("click", function () {
+                    selectObject(object.id);
+                });
+
+                fragment.appendChild(item);
+            });
+
+            list.appendChild(fragment);
+        }
+
+        function showDetails(object) {
+            const details = document.getElementById("details");
+
+            details.innerHTML = "";
+
+            const name = document.createElement("div");
+            name.className = "detail-name";
+            name.textContent = object.name;
+
+            const id = document.createElement("div");
+            id.className = "detail-id";
+            id.textContent = "NORAD ID: " + object.id;
+
+            details.appendChild(name);
+            details.appendChild(id);
+
+            const rows = [
+                ["Category", object.category],
+                ["Latitude", formatNumber(object.lat, 5) + "°"],
+                ["Longitude", formatNumber(object.lon, 5) + "°"],
+                ["Altitude", formatNumber(object.altitude) + " km"],
+                ["Velocity", formatNumber(object.velocity, 3) + " km/s"]
+            ];
+
+            rows.forEach(([label, value]) => {
+                const row = document.createElement("div");
+                row.className = "detail-row";
+
+                const left = document.createElement("span");
+                left.textContent = label;
+
+                const right = document.createElement("span");
+                right.textContent = value;
+
+                row.appendChild(left);
+                row.appendChild(right);
+                details.appendChild(row);
+            });
+
+            const actions = document.createElement("div");
+            actions.className = "detail-actions";
+
+            const followButton = document.createElement("button");
+            followButton.textContent = following
+                ? "Stop following"
+                : "Follow object";
+
+            followButton.addEventListener("click", function () {
+                following = !following;
+
+                if (following) {
+                    map.setView(
+                        [object.lat, object.lon],
+                        Math.max(map.getZoom(), 4)
+                    );
+                }
+
+                showDetails(object);
+            });
+
+            const trailButton = document.createElement("button");
+            trailButton.className = "secondary";
+            trailButton.textContent = "Show orbital trail";
+
+            trailButton.addEventListener("click", function () {
+                showTrail(object);
+            });
+
+            const clearButton = document.createElement("button");
+            clearButton.className = "secondary";
+            clearButton.textContent = "Clear trail";
+
+            clearButton.addEventListener("click", clearTrail);
+
+            actions.appendChild(followButton);
+            actions.appendChild(trailButton);
+            actions.appendChild(clearButton);
+
+            details.appendChild(actions);
+        }
+
+        function selectObject(id) {
+            const object = objects.find(item => item.id === id);
+
+            if (!object) {
+                return;
+            }
+
+            selectedObject = object;
+            following = false;
+
+            updateList();
+            showDetails(object);
+
+            map.setView(
+                [object.lat, object.lon],
+                Math.max(map.getZoom(), 4)
+            );
+        }
+
+        function showTrail(object) {
+            clearTrail();
+
+            if (!object.orbit || object.orbit.length < 2) {
+                mapStatus.textContent =
+                    "No orbital trail data available for this object";
+                return;
+            }
+
+            const points = object.orbit
+                .filter(point =>
+                    Array.isArray(point) &&
+                    Number.isFinite(Number(point[0])) &&
+                    Number.isFinite(Number(point[1]))
+                )
+                .map(point => [
+                    Number(point[0]),
+                    Number(point[1])
+                ]);
+
+            if (points.length < 2) {
+                mapStatus.textContent =
+                    "Not enough trail points available";
+                return;
+            }
+
+            trailLayer = L.polyline(points, {
+                color: object.color,
+                weight: 2,
+                opacity: 0.8
+            }).addTo(map);
+
+            map.fitBounds(trailLayer.getBounds(), {
+                padding: [35, 35]
+            });
+
+            mapStatus.textContent = "Showing orbital trail";
+        }
+
+        function clearTrail() {
+            if (trailLayer) {
+                map.removeLayer(trailLayer);
+                trailLayer = null;
+            }
+
+            mapStatus.textContent = "Map loaded";
+        }
+
+        async function loadObjects() {
+            const status = document.getElementById("connectionStatus");
+
+            try {
+                const response = await fetch(API_URL, {
+                    cache: "no-store"
+                });
+
+                if (!response.ok) {
+                    throw new Error("Server returned " + response.status);
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error("Unexpected satellite data format");
+                }
+
+                objects = data
+                    .map(normalizeObject)
+                    .filter(object =>
+                        object.id &&
+                        Number.isFinite(object.lat) &&
+                        Number.isFinite(object.lon)
+                    );
+
+                updateMarkers();
+                updateList();
+
+                status.innerHTML =
+                    '<span>●</span> Connected · ' +
+                    objects.length.toLocaleString() +
+                    " objects";
+
+            } catch (error) {
+                console.error("Satellite data error:", error);
+
+                status.innerHTML =
+                    '<span style="color:#e58b80">●</span> Data unavailable';
+
+                document.getElementById("objectList").innerHTML =
+                    '<div class="loading">Could not load satellite data. Check the browser console for details.</div>';
+            }
+        }
+
+        document.getElementById("search").addEventListener(
+            "input",
+            function () {
+                updateList();
+                updateMarkers();
+            }
+        );
+
+        document.querySelectorAll(".filter-list input").forEach(input => {
+            input.addEventListener("change", function () {
+                if (input.value === "all" && input.checked) {
+                    document.querySelectorAll(
+                        '.filter-list input:not([value="all"])'
+                    ).forEach(other => {
+                        other.checked = false;
+                    });
+                } else if (input.value !== "all" && input.checked) {
+                    document.querySelector(
+                        '.filter-list input[value="all"]'
+                    ).checked = false;
+                }
+
+                const allFilters = document.querySelectorAll(
+                    '.filter-list input:not([value="all"])'
+                );
+
+                const allChecked = Array.from(allFilters).every(
+                    filter => filter.checked
+                );
+
+                if (allChecked) {
+                    document.querySelector(
+                        '.filter-list input[value="all"]'
+                    ).checked = true;
+                }
+
+                updateList();
+                updateMarkers();
+            });
+        });
+
+        map.whenReady(function () {
+            map.invalidateSize();
+            mapStatus.textContent = "Map ready";
+        });
+
+        window.addEventListener("resize", function () {
+            map.invalidateSize();
+        });
+
+        loadObjects();
+
+        setInterval(loadObjects, REFRESH_INTERVAL);
+
+        setInterval(function () {
+            if (following && selectedObject) {
+                const updated = objects.find(
+                    object => object.id === selectedObject.id
+                );
+
+                if (updated) {
+                    selectedObject = updated;
+
+                    map.panTo(
+                        [updated.lat, updated.lon],
+                        { animate: true }
+                    );
+                }
+            }
+        }, 2000);
+    </script>
 </body>
 </html>
