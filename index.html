@@ -3,497 +3,520 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SpaceTrace</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Space Tracker</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
-:root{color-scheme:dark;--bg:#101416;--panel:#171d20;--line:#2b3438;--muted:#8d9a9e;--text:#e5eceb;--accent:#b7d7d0;--orange:#d69a68}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Manrope,Arial,sans-serif}
-header{height:62px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px}
-.brand{font-size:15px;font-weight:800;letter-spacing:1.7px}
-.brand span{color:var(--accent)}
-.header-right{display:flex;align-items:center;gap:22px;color:var(--muted);font:11px 'DM Mono',monospace}
-.status{display:flex;align-items:center;gap:8px}
-.dot{width:7px;height:7px;border-radius:50%;background:#87928e}
-.dot.ok{background:#91c6a8}
-.dot.bad{background:#d58c72}
-main{max-width:1600px;margin:auto;padding:25px 28px 40px}
-.heading{display:flex;justify-content:space-between;align-items:end;margin-bottom:22px}
-.eyebrow{font:10px 'DM Mono',monospace;color:var(--muted);letter-spacing:1.4px;text-transform:uppercase}
-h1{font-size:25px;letter-spacing:-.8px;margin:7px 0 0;font-weight:600}
-.heading-note{font:11px 'DM Mono',monospace;color:var(--muted)}
-.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
-.left{min-width:0}
-.globe-wrap{height:590px;background:#0b1114;border:1px solid var(--line);position:relative;overflow:hidden}
-#globe{width:100%;height:100%;display:block}
-.globe-label{position:absolute;top:18px;left:19px;font:10px 'DM Mono',monospace;color:#a4b3b3;letter-spacing:1px;pointer-events:none}
-.globe-coords{position:absolute;bottom:17px;left:19px;font:10px 'DM Mono',monospace;color:#839193;pointer-events:none}
-.globe-actions{position:absolute;right:15px;top:14px;display:flex;gap:7px}
-button{font:11px Manrope,sans-serif;color:var(--text);background:#1a2428;border:1px solid #354247;padding:8px 12px;cursor:pointer}
-button:hover{background:#263438}
-button.active{border-color:var(--accent);color:var(--accent)}
-.legend{display:flex;gap:18px;padding:12px 16px;border:1px solid var(--line);border-top:0;color:var(--muted);font:10px 'DM Mono',monospace}
-.legend span{display:flex;align-items:center;gap:7px}
-.swatch{width:7px;height:7px;border-radius:50%;display:inline-block}
-.register{margin-top:18px;border:1px solid var(--line);background:var(--panel)}
-.section-head{padding:15px 17px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
-.section-title{font-size:12px;font-weight:700;letter-spacing:.3px}
-.count{font:10px 'DM Mono',monospace;color:var(--muted)}
-.tools{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
-input,select{background:#101719;color:var(--text);border:1px solid var(--line);padding:9px 10px;font:11px 'DM Mono',monospace;outline:none}
-input{flex:1;min-width:0}
-select{width:140px}
-input:focus,select:focus{border-color:#718d87}
-table{width:100%;border-collapse:collapse;text-align:left}
-th{font:9px 'DM Mono',monospace;color:var(--muted);font-weight:400;text-transform:uppercase;letter-spacing:.8px;padding:11px 14px}
-td{padding:11px 14px;border-top:1px solid #263034;font:11px 'DM Mono',monospace;color:#c5d0ce}
-tr.object{cursor:pointer}
-tr.object:hover{background:#202a2d}
-tr.object.selected{background:#263431}
-td:first-child{font-family:Manrope,sans-serif;font-weight:600;color:var(--text)}
-.right{border:1px solid var(--line);background:var(--panel);min-height:520px}
-.detail-head{padding:18px;border-bottom:1px solid var(--line)}
-.detail-name{font-size:18px;font-weight:600;margin-top:8px}
-.detail-id{font:10px 'DM Mono',monospace;color:var(--muted);margin-top:5px}
-.detail-body{padding:18px}
-.detail-placeholder{color:var(--muted);font-size:12px;line-height:1.7;padding:20px 2px}
-.data-block{margin-bottom:22px}
-.data-title{font:10px 'DM Mono',monospace;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px}
-.data-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #293236;font:11px 'DM Mono',monospace}
-.data-row span:first-child{color:var(--muted)}
-.data-row span:last-child{text-align:right;color:var(--text)}
-.source{font:10px 'DM Mono',monospace;color:var(--muted);line-height:1.7;padding:14px 17px;border-top:1px solid var(--line)}
-.message{padding:13px 15px;font:11px 'DM Mono',monospace;line-height:1.6;color:var(--muted);border-bottom:1px solid var(--line)}
-.message.error{color:#e0a38c}
-.message.good{color:#a9cabb}
-a{color:var(--accent)}
-footer{margin-top:22px;border-top:1px solid var(--line);padding-top:14px;display:flex;justify-content:space-between;gap:15px;color:var(--muted);font:10px 'DM Mono',monospace}
-@media(max-width:950px){.layout{grid-template-columns:1fr}.right{min-height:0}.globe-wrap{height:470px}}
-@media(max-width:600px){header{padding:0 15px}.header-right{gap:10px}main{padding:18px 12px}.heading{align-items:start;gap:12px;flex-direction:column}.globe-wrap{height:390px}.legend{flex-wrap:wrap}th,td{padding:9px 7px;font-size:9px}.tools{flex-wrap:wrap}select{flex:1}}
+body{margin:0;background:#101419;color:#e6e9ed;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
+button,input,select{font:inherit}
+.topbar{height:58px;background:#171d24;border-bottom:1px solid #303943;display:flex;align-items:center;padding:0 20px;gap:22px}
+.brand{font-size:17px;font-weight:700;letter-spacing:2px}
+.brand span{color:#8cb9d8}
+.status{font-size:12px;color:#9ba8b4;display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;background:#727e89}
+.dot.live{background:#57c98a}
+.topright{margin-left:auto;font-size:12px;color:#9ba8b4}
+.layout{height:calc(100vh - 58px);display:grid;grid-template-columns:285px minmax(0,1fr) 280px}
+.panel{background:#171d24;min-height:0;overflow:hidden}
+.left{border-right:1px solid #303943;display:flex;flex-direction:column}
+.right{border-left:1px solid #303943;padding:18px;overflow-y:auto}
+.panelhead{padding:17px 16px 12px;border-bottom:1px solid #303943}
+.paneltitle{font-size:11px;font-weight:bold;letter-spacing:1.4px;color:#8d9aa7}
+.search{width:100%;margin-top:13px;background:#10161c;border:1px solid #39444f;border-radius:4px;padding:10px;color:#e6e9ed;outline:none}
+.search:focus{border-color:#83b8d9}
+.filters{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+.filter{background:#222b34;border:1px solid #39444f;color:#aebac5;border-radius:3px;padding:6px 8px;font-size:11px;cursor:pointer}
+.filter.active{background:#30485b;border-color:#668ba6;color:#fff}
+.object-count{padding:12px 16px;color:#8d9aa7;font-size:11px;border-bottom:1px solid #303943}
+.object-list{overflow-y:auto;flex:1}
+.object{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:12px 14px;background:none;border:0;border-bottom:1px solid #252e37;color:#e6e9ed;cursor:pointer}
+.object:hover{background:#202a34}
+.object.selected{background:#263746}
+.object-color{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.object-info{min-width:0;flex:1}
+.object-name{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.object-id{font-size:10px;color:#84919d;margin-top:4px}
+.object-alt{font-size:10px;color:#9ba8b4;white-space:nowrap}
+.mapwrap{position:relative;min-width:0;min-height:0;background:#0d141a}
+#map{height:100%;width:100%;background:#101820}
+.map-controls{position:absolute;z-index:500;top:14px;left:14px;display:flex;gap:7px}
+.control{background:#18232d;border:1px solid #43515d;color:#dce4eb;padding:9px 12px;border-radius:3px;font-size:11px;cursor:pointer}
+.control:hover{background:#293b4a}
+.map-note{position:absolute;bottom:12px;left:12px;z-index:500;background:#17212bdc;padding:7px 10px;color:#9eabb7;font-size:10px;border:1px solid #34414c}
+.detail-title{font-size:11px;letter-spacing:1.4px;color:#8d9aa7;font-weight:bold;margin-bottom:20px}
+.empty{color:#7f8c98;font-size:12px;line-height:1.6}
+.selected-name{font-size:19px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.selected-id{font-size:11px;color:#8d9aa7;margin-top:7px}
+.detail-rule{height:1px;background:#303943;margin:18px 0}
+.detail-row{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #29323b;font-size:12px}
+.detail-row span:first-child{color:#8996a2}
+.detail-row span:last-child{text-align:right;color:#e4e9ee;font-variant-numeric:tabular-nums}
+.detail-actions{display:flex;gap:7px;margin-top:18px}
+.detail-actions button{flex:1}
+.small-note{font-size:10px;color:#788691;line-height:1.6;margin-top:18px}
+.error{color:#e7a18e}
+.leaflet-container{font-family:Arial,Helvetica,sans-serif}
+.leaflet-control-attribution{font-size:9px!important}
+@media(max-width:900px){
+.layout{grid-template-columns:230px minmax(0,1fr)}
+.right{display:none}
+}
+@media(max-width:600px){
+body{overflow:auto}
+.topbar{height:52px;padding:0 12px}
+.topright{display:none}
+.layout{height:calc(100vh - 52px);grid-template-columns:1fr;grid-template-rows:42% 58%}
+.left{grid-row:2;border-right:0;border-top:1px solid #303943}
+.mapwrap{grid-row:1}
+.map-controls{top:8px;left:8px}
+.control{padding:7px 9px}
+.panelhead{padding:10px 12px}
+.object-count{padding:8px 12px}
+.object{padding:9px 12px}
+}
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">SPACE<span>TRACE</span></div>
-  <div class="header-right">
-    <div class="status"><i class="dot" id="statusDot"></i><span id="statusText">CONNECTING</span></div>
-    <span id="clock">--:--:-- UTC</span>
-  </div>
+<header class="topbar">
+  <div class="brand">SPACE <span>TRACKER</span></div>
+  <div class="status"><span class="dot" id="statusDot"></span><span id="statusText">CONNECTING</span></div>
+  <div class="topright" id="updated">Waiting for data</div>
 </header>
 
-<main>
-  <div class="heading">
-    <div>
-      <div class="eyebrow">Orbital tracking / Earth</div>
-      <h1>Object tracking</h1>
+<main class="layout">
+  <aside class="panel left">
+    <div class="panelhead">
+      <div class="paneltitle">TRACKED OBJECTS</div>
+      <input class="search" id="search" placeholder="Search name or NORAD ID..." autocomplete="off">
+      <div class="filters" id="filters">
+        <button class="filter active" data-filter="all">All</button>
+        <button class="filter" data-filter="station">Stations</button>
+        <button class="filter" data-filter="starlink">Starlink</button>
+        <button class="filter" data-filter="gps">GPS</button>
+        <button class="filter" data-filter="weather">Weather</button>
+        <button class="filter" data-filter="other">Other</button>
+      </div>
     </div>
-    <div class="heading-note" id="dataStamp">WAITING FOR ORBITAL DATA</div>
-  </div>
+    <div class="object-count" id="objectCount">Loading objects...</div>
+    <div class="object-list" id="objectList"></div>
+  </aside>
 
-  <div class="layout">
-    <section class="left">
-      <div class="globe-wrap">
-        <canvas id="globe"></canvas>
-        <div class="globe-label">EARTH · INERTIAL VIEW</div>
-        <div class="globe-coords" id="globeInfo">NO OBJECT SELECTED</div>
-        <div class="globe-actions">
-          <button id="rotateBtn" class="active">Rotation on</button>
-          <button id="resetBtn">Reset view</button>
-        </div>
-      </div>
-      <div class="legend">
-        <span><i class="swatch" style="background:#d69a68"></i> Space stations</span>
-        <span><i class="swatch" style="background:#b7d7d0"></i> Other objects</span>
-        <span><i class="swatch" style="background:#fff"></i> Selected</span>
-      </div>
+  <section class="mapwrap">
+    <div id="map"></div>
+    <div class="map-controls">
+      <button class="control" id="worldBtn">World view</button>
+      <button class="control" id="followBtn">Follow: OFF</button>
+      <button class="control" id="refreshBtn">Refresh</button>
+    </div>
+    <div class="map-note">Positions supplied by Orbiting Frog</div>
+  </section>
 
-      <section class="register">
-        <div class="section-head">
-          <div class="section-title">Object register</div>
-          <div class="count" id="objectCount">0 OBJECTS</div>
-        </div>
-        <div class="tools">
-          <input id="search" placeholder="Search name or catalog number">
-          <select id="filter">
-            <option value="all">All objects</option>
-            <option value="station">Stations</option>
-            <option value="other">Other objects</option>
-          </select>
-        </div>
-        <div id="tableMessage" class="message">Waiting for orbital data.</div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr><th>Object</th><th>Catalog</th><th>Altitude</th><th>Velocity</th></tr></thead>
-            <tbody id="objectRows"></tbody>
-          </table>
-        </div>
-      </section>
-    </section>
-
-    <aside class="right">
-      <div class="detail-head">
-        <div class="eyebrow">Object inspection</div>
-        <div class="detail-name" id="detailName">No selection</div>
-        <div class="detail-id" id="detailId">Select an object from the register</div>
-      </div>
-      <div class="detail-body" id="detailBody">
-        <div class="detail-placeholder">Select an object to inspect its current propagated position and orbital elements.</div>
-      </div>
-      <div class="source" id="sourceInfo">DATA SOURCE<br>Not connected</div>
-    </aside>
-  </div>
-
-  <footer>
-    <span>SPACETRACE / ORBITAL OBJECT MONITOR</span>
-    <span>SGP4 PROPAGATION · NOT DIRECT GPS</span>
-  </footer>
+  <aside class="panel right">
+    <div class="detail-title">OBJECT INFORMATION</div>
+    <div id="details" class="empty">Select an object on the map or in the list to inspect it.</div>
+  </aside>
 </main>
 
-<script type="module">
-import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
-import {OrbitControls} from 'https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/controls/OrbitControls.js';
-import * as satellite from 'https://cdn.jsdelivr.net/npm/satellite.js@6.0.2/+esm';
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const API = "https://satellites.orbitingfrog.com/api/positions?group=visual";
+const REFRESH_MS = 30000;
 
-const $=id=>document.getElementById(id);
-const canvas=$('globe');
-const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(42,1,.1,1000);
-camera.position.set(0,0,3.15);
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-const controls=new OrbitControls(camera,canvas);
-controls.enableDamping=true;
-controls.minDistance=1.5;
-controls.maxDistance=7;
-controls.autoRotate=true;
-controls.autoRotateSpeed=.35;
+const map = L.map("map", {
+  worldCopyJump: true,
+  minZoom: 2,
+  maxZoom: 9
+}).setView([20, 0], 2);
 
-scene.add(new THREE.AmbientLight(0xffffff,1.6));
-const sun=new THREE.DirectionalLight(0xffffff,2.2);
-sun.position.set(4,2,5);
-scene.add(sun);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+  subdomains: "abcd",
+  maxZoom: 19
+}).addTo(map);
 
-const earthGroup=new THREE.Group();
-scene.add(earthGroup);
-const earth=new THREE.Mesh(
-  new THREE.SphereGeometry(1,64,64),
-  new THREE.MeshPhongMaterial({color:0x668b91,specular:0x172528,shininess:8})
-);
-earthGroup.add(earth);
+const markerLayer = L.layerGroup().addTo(map);
+const trailLayer = L.layerGroup().addTo(map);
 
-const grid=new THREE.Group();
-const gridMat=new THREE.LineBasicMaterial({color:0x9ab9b5,transparent:true,opacity:.18});
-for(let lat=-75;lat<=75;lat+=15){
-  const points=[];
-  for(let lon=0;lon<=360;lon+=3){
-    const a=THREE.MathUtils.degToRad(lat),b=THREE.MathUtils.degToRad(lon);
-    points.push(new THREE.Vector3(Math.cos(a)*Math.cos(b)*1.003,Math.sin(a)*1.003,Math.cos(a)*Math.sin(b)*1.003));
-  }
-  grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),gridMat));
-}
-for(let lon=0;lon<180;lon+=15){
-  const points=[];
-  for(let lat=-90;lat<=90;lat+=3){
-    const a=THREE.MathUtils.degToRad(lat),b=THREE.MathUtils.degToRad(lon);
-    points.push(new THREE.Vector3(Math.cos(a)*Math.cos(b)*1.003,Math.sin(a)*1.003,Math.cos(a)*Math.sin(b)*1.003));
-  }
-  grid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),gridMat));
-}
-earthGroup.add(grid);
+let objects = [];
+let selectedId = null;
+let activeFilter = "all";
+let searchText = "";
+let follow = false;
+let loading = false;
+let lastUpdated = null;
 
-const atmosphere=new THREE.Mesh(
-  new THREE.SphereGeometry(1.018,48,48),
-  new THREE.MeshBasicMaterial({color:0x7ca8ac,transparent:true,opacity:.055,side:THREE.BackSide})
-);
-earthGroup.add(atmosphere);
+const $ = id => document.getElementById(id);
 
-const stars=new THREE.BufferGeometry();
-const starPositions=[];
-for(let i=0;i<900;i++){
-  const v=new THREE.Vector3().randomDirection().multiplyScalar(30+Math.random()*40);
-  starPositions.push(v.x,v.y,v.z);
-}
-stars.setAttribute('position',new THREE.Float32BufferAttribute(starPositions,3));
-scene.add(new THREE.Points(stars,new THREE.PointsMaterial({color:0x718184,size:.055})));
-
-const markerGroup=new THREE.Group();
-earthGroup.add(markerGroup);
-let objects=[];
-let selected=null;
-let markerById=new Map();
-let rotate=true;
-
-function resize(){
-  const w=canvas.clientWidth,h=canvas.clientHeight;
-  renderer.setSize(w,h,false);
-  camera.aspect=w/h;
-  camera.updateProjectionMatrix();
-}
-new ResizeObserver(resize).observe(canvas);
-resize();
-
-function toVector(lat,lon,r=1.035){
-  const a=THREE.MathUtils.degToRad(lat);
-  const b=THREE.MathUtils.degToRad(lon);
-  return new THREE.Vector3(
-    -r*Math.cos(a)*Math.cos(b),
-    r*Math.sin(a),
-    r*Math.cos(a)*Math.sin(b)
-  );
+function setStatus(text, live, error = false) {
+  $("statusText").textContent = text;
+  $("statusDot").className = "dot" + (live ? " live" : "");
+  $("statusText").className = error ? "error" : "";
 }
 
-function makeMarker(obj){
-  const station=obj.name.toUpperCase().includes('ISS')||obj.name.toUpperCase().includes('TIANGONG')||obj.name.toUpperCase().includes('CSS');
-  const material=new THREE.MeshBasicMaterial({color:station?0xd69a68:0xb7d7d0});
-  const mesh=new THREE.Mesh(new THREE.SphereGeometry(station?.012:.007,10,10),material);
-  mesh.userData.id=obj.id;
-  markerGroup.add(mesh);
-  markerById.set(obj.id,mesh);
-  return mesh;
+function classify(item) {
+  const n = item.name.toLowerCase();
+
+  if (/starlink/.test(n)) return "starlink";
+  if (/gps|navstar/.test(n)) return "gps";
+  if (/iss|tiangong|soyuz|space station|crew dragon/.test(n)) return "station";
+  if (/noaa|goes|meteosat|weather|fengyun|himawari/.test(n)) return "weather";
+  return "other";
 }
 
-function propagate(obj,date=new Date()){
-  const pv=satellite.propagate(obj.satrec,date);
-  if(!pv.position||typeof pv.position==='boolean')return null;
-  const gmst=satellite.gstime(date);
-  const geo=satellite.eciToGeodetic(pv.position,gmst);
-  const velocity=pv.velocity?Math.sqrt(pv.velocity.x**2+pv.velocity.y**2+pv.velocity.z**2):0;
+function normalize(item) {
+  if (!item || item.lat === undefined || item.lon === undefined) return null;
+
+  const lat = Number(item.lat);
+  const lon = Number(item.lon);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) return null;
+
   return {
-    lat:satellite.degreesLat(geo.latitude),
-    lon:satellite.degreesLong(geo.longitude),
-    alt:geo.height,
-    velocity
+    id: String(item.noradId ?? item.id ?? ""),
+    name: String(item.name || "Unknown object"),
+    lat,
+    lon,
+    altitude: Number(item.alt),
+    velocity: Number(item.velocity),
+    color: /^#[0-9a-f]{6}$/i.test(item.color || "") ? item.color : "#8cb9d8",
+    orbit: Array.isArray(item.orbit) ? item.orbit : [],
+    category: classify(item)
   };
 }
 
-function updatePositions(){
-  const now=new Date();
-  for(const obj of objects){
-    const p=propagate(obj,now);
-    if(!p)continue;
-    obj.position=p;
-    const marker=markerById.get(obj.id);
-    if(marker)marker.position.copy(toVector(p.lat,p.lon));
-  }
-  if(selected)showDetails(selected);
-  renderRows();
+function formatNumber(value, digits = 1) {
+  return Number.isFinite(value) ? value.toLocaleString("en-US", {
+    maximumFractionDigits: digits,
+    minimumFractionDigits: 0
+  }) : "Not provided";
 }
 
-function renderRows(){
-  const q=$('search').value.trim().toLowerCase();
-  const f=$('filter').value;
-  const rows=objects.filter(o=>{
-    const station=o.name.toUpperCase().includes('ISS')||o.name.toUpperCase().includes('TIANGONG')||o.name.toUpperCase().includes('CSS');
-    return (o.name.toLowerCase().includes(q)||String(o.id).includes(q))&&(f==='all'||(f==='station'?station:!station));
+function altitudeText(value) {
+  return Number.isFinite(value) ? formatNumber(value) + " km" : "Not provided";
+}
+
+function speedText(value) {
+  return Number.isFinite(value) ? formatNumber(value, 3) + " km/s" : "Not provided";
+}
+
+function visibleObjects() {
+  return objects.filter(item => {
+    const matchesFilter = activeFilter === "all" || item.category === activeFilter;
+    const matchesSearch = !searchText ||
+      item.name.toLowerCase().includes(searchText) ||
+      item.id.toLowerCase().includes(searchText);
+    return matchesFilter && matchesSearch;
   });
-  $('objectCount').textContent=rows.length+' OBJECTS';
-  $('objectRows').innerHTML=rows.slice(0,160).map(o=>`
-    <tr class="object ${selected?.id===o.id?'selected':''}" data-id="${o.id}">
-      <td>${escapeHtml(o.name)}</td>
-      <td>${o.id}</td>
-      <td>${o.position?o.position.alt.toFixed(1)+' km':'—'}</td>
-      <td>${o.position?o.position.velocity.toFixed(2)+' km/s':'—'}</td>
-    </tr>`).join('');
 }
 
-function escapeHtml(s){
-  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function makeMarker(item) {
+  const isSelected = item.id === selectedId;
+  return L.circleMarker([item.lat, item.lon], {
+    radius: isSelected ? 7 : 4,
+    color: isSelected ? "#ffffff" : item.color,
+    weight: isSelected ? 2 : 1,
+    fillColor: item.color,
+    fillOpacity: 0.95
+  }).on("click", () => selectObject(item.id));
 }
 
-function selectObject(id){
-  selected=objects.find(o=>o.id===Number(id));
-  if(!selected)return;
-  showDetails(selected);
-  for(const [key,mesh] of markerById){
-    const isSelected=key===selected.id;
-    mesh.scale.setScalar(isSelected?2.4:1);
-    mesh.material.color.set(isSelected?0xffffff:(objects.find(o=>o.id===key)?.name.toUpperCase().includes('ISS')?0xd69a68:0xb7d7d0));
-  }
-  $('globeInfo').textContent=selected.name.toUpperCase()+' / '+selected.id;
-  renderRows();
-}
+function renderMap() {
+  markerLayer.clearLayers();
 
-function showDetails(obj){
-  const p=obj.position||propagate(obj);
-  if(!p)return;
-  $('detailName').textContent=obj.name;
-  $('detailId').textContent='NORAD CAT ID  '+obj.id;
-  $('detailBody').innerHTML=`
-    <div class="data-block">
-      <div class="data-title">Current position</div>
-      ${row('Latitude',p.lat.toFixed(4)+'°')}
-      ${row('Longitude',p.lon.toFixed(4)+'°')}
-      ${row('Altitude',p.alt.toFixed(2)+' km')}
-      ${row('Velocity',p.velocity.toFixed(3)+' km/s')}
-    </div>
-    <div class="data-block">
-      <div class="data-title">Orbital elements</div>
-      ${row('Inclination',Number(obj.satrec.inclo*180/Math.PI).toFixed(3)+'°')}
-      ${row('Eccentricity',Number(obj.satrec.ecco).toFixed(6))}
-      ${row('Mean motion',Number(obj.satrec.no*1440/(2*Math.PI)).toFixed(4)+' rev/day')}
-      ${row('Epoch',obj.epoch||'Not supplied')}
-    </div>
-    <div class="data-block">
-      <div class="data-title">Propagation</div>
-      ${row('Model','SGP4')}
-      ${row('Position time',new Date().toISOString().replace('T',' ').slice(0,19)+' UTC')}
-    </div>`;
-}
-
-function row(k,v){return `<div class="data-row"><span>${k}</span><span>${escapeHtml(v)}</span></div>`}
-
-function parseObjects(data){
-  const valid=[];
-  for(const item of data){
-    try{
-      const satrec=satellite.json2satrec(item);
-      if(satrec.error!==0)continue;
-      const id=Number(item.NORAD_CAT_ID??item.NORAD_CAT_ID??item.OBJECT_ID);
-      const name=item.OBJECT_NAME||item.NAME||('Object '+id);
-      if(!Number.isFinite(id))continue;
-      valid.push({id,name,satrec,epoch:item.EPOCH||'Not supplied'});
-    }catch(e){}
-  }
-  return valid;
-}
-
-const cacheKey='spacetrace_data_v4';
-function readCache(){
-  try{
-    const v=JSON.parse(localStorage.getItem(cacheKey));
-    if(v&&Array.isArray(v.data))return v;
-  }catch(e){}
-  return null;
-}
-function saveCache(data,source){
-  try{localStorage.setItem(cacheKey,JSON.stringify({saved:Date.now(),source,data}));}catch(e){}
-}
-
-async function fetchJson(url){
-  const response=await fetch(url,{cache:'no-store'});
-  if(!response.ok)throw new Error('HTTP '+response.status+' from '+new URL(url).hostname);
-  const data=await response.json();
-  if(!Array.isArray(data)||!data.length)throw new Error('The data source returned an empty or unexpected response.');
-  return data;
-}
-
-async function loadData(){
-  const cache=readCache();
-  if(cache){
-    objects=parseObjects(cache.data);
-    drawObjects();
-    $('tableMessage').textContent='Showing saved orbital elements while checking for an update.';
-    $('sourceInfo').innerHTML='DATA SOURCE<br>'+escapeHtml(cache.source)+'<br>Saved '+new Date(cache.saved).toLocaleString();
-    setStatus('CACHED DATA','good');
+  const shown = visibleObjects();
+  for (const item of shown) {
+    makeMarker(item).addTo(markerLayer);
   }
 
-  if(cache&&Date.now()-cache.saved<2*60*60*1000){
-    $('dataStamp').textContent='CACHED DATA · '+new Date(cache.saved).toLocaleTimeString();
-    $('tableMessage').textContent='Using cached orbital elements. Next refresh after the two-hour update window.';
+  if (selectedId && !shown.some(item => item.id === selectedId)) {
+    trailLayer.clearLayers();
+  }
+}
+
+function renderList() {
+  const shown = visibleObjects();
+  $("objectCount").textContent =
+    shown.length.toLocaleString() + " objects shown · " +
+    objects.length.toLocaleString() + " received";
+
+  const list = $("objectList");
+  list.replaceChildren();
+
+  if (!shown.length) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.style.padding = "18px";
+    empty.textContent = objects.length ? "No objects match your search." : "No object data available.";
+    list.appendChild(empty);
     return;
   }
 
-  const endpoints=[
-    ['ReTLEctor cache','https://retlector.eu/stations/json'],
-    ['CelesTrak stations','https://celestrak.org/NORAD/elements/gp.php?GROUP=STATIONS&FORMAT=JSON']
-  ];
-  let data=null,source='';
-  let errors=[];
+  const fragment = document.createDocumentFragment();
 
-  for(const [label,url] of endpoints){
-    try{
-      data=await fetchJson(url);
-      source=label;
-      break;
-    }catch(e){errors.push(label+': '+e.message);}
+  for (const item of shown) {
+    const button = document.createElement("button");
+    button.className = "object" + (item.id === selectedId ? " selected" : "");
+    button.type = "button";
+
+    const color = document.createElement("span");
+    color.className = "object-color";
+    color.style.background = item.color;
+
+    const info = document.createElement("span");
+    info.className = "object-info";
+
+    const name = document.createElement("div");
+    name.className = "object-name";
+    name.textContent = item.name;
+
+    const id = document.createElement("div");
+    id.className = "object-id";
+    id.textContent = "NORAD " + (item.id || "Unknown");
+
+    info.append(name, id);
+
+    const alt = document.createElement("span");
+    alt.className = "object-alt";
+    alt.textContent = Number.isFinite(item.altitude) ? Math.round(item.altitude) + " km" : "";
+
+    button.append(color, info, alt);
+    button.addEventListener("click", () => selectObject(item.id));
+    fragment.appendChild(button);
   }
 
-  if(!data){
-    if(cache){
-      setStatus('SAVED DATA','bad');
-      $('tableMessage').textContent='Could not refresh. Showing saved data instead. '+errors.join(' | ');
-      $('dataStamp').textContent='SAVED DATA · UPDATE FAILED';
-      return;
+  list.appendChild(fragment);
+}
+
+function drawTrail(item) {
+  trailLayer.clearLayers();
+
+  if (!item || !item.orbit.length) return;
+
+  let segment = [];
+  const segments = [];
+
+  for (const point of item.orbit) {
+    if (!Array.isArray(point) || point.length < 2) continue;
+
+    const lat = Number(point[0]);
+    const lon = Number(point[1]);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) continue;
+
+    if (segment.length && Math.abs(lon - segment[segment.length - 1][1]) > 180) {
+      if (segment.length > 1) segments.push(segment);
+      segment = [];
     }
-    throw new Error(errors.join(' / '));
+
+    segment.push([lat, lon]);
   }
 
-  const stations=parseObjects(data);
-  const stationData=data;
-  saveCache(stationData,source);
-  objects=stations;
-  drawObjects();
-  $('tableMessage').textContent='Station data loaded. Loading additional objects…';
+  if (segment.length > 1) segments.push(segment);
 
-  try{
-    const visual=await fetchJson('https://retlector.eu/visual/json');
-    const merged=new Map();
-    for(const o of [...objects,...parseObjects(visual)])merged.set(o.id,o);
-    objects=[...merged.values()];
-    saveCache([...stationData,...visual],source+' + ReTLEctor visual');
-    source+=' + ReTLEctor visual';
-  }catch(e){
-    $('tableMessage').textContent='Station data loaded. Additional object group unavailable: '+e.message;
+  for (const points of segments) {
+    L.polyline(points, {
+      color: item.color,
+      weight: 2,
+      opacity: 0.8,
+      dashArray: "5 6"
+    }).addTo(trailLayer);
+  }
+}
+
+function renderDetails(item) {
+  const panel = $("details");
+
+  if (!item) {
+    panel.className = "empty";
+    panel.textContent = "Select an object on the map or in the list to inspect it.";
+    return;
   }
 
-  drawObjects();
-  setStatus('CONNECTED','good');
-  $('dataStamp').textContent='ELEMENTS RECEIVED · '+new Date().toLocaleTimeString();
-  $('sourceInfo').innerHTML='DATA SOURCE<br>'+escapeHtml(source)+'<br>Orbital elements are periodically updated; positions are propagated locally.';
-  $('tableMessage').textContent='Select an object to inspect its propagated position.';
+  panel.className = "";
+
+  const title = document.createElement("div");
+  title.className = "selected-name";
+  title.textContent = item.name;
+
+  const id = document.createElement("div");
+  id.className = "selected-id";
+  id.textContent = "NORAD ID: " + (item.id || "Not provided");
+
+  panel.replaceChildren(title, id);
+
+  const rule = document.createElement("div");
+  rule.className = "detail-rule";
+  panel.appendChild(rule);
+
+  const rows = [
+    ["Category", item.category.charAt(0).toUpperCase() + item.category.slice(1)],
+    ["Altitude", altitudeText(item.altitude)],
+    ["Velocity", speedText(item.velocity)],
+    ["Latitude", formatNumber(item.lat, 5) + "°"],
+    ["Longitude", formatNumber(item.lon, 5) + "°"],
+    ["Orbit points", String(item.orbit.length)]
+  ];
+
+  for (const [label, value] of rows) {
+    const row = document.createElement("div");
+    row.className = "detail-row";
+    const left = document.createElement("span");
+    left.textContent = label;
+    const right = document.createElement("span");
+    right.textContent = value;
+    row.append(left, right);
+    panel.appendChild(row);
+  }
+
+  const actions = document.createElement("div");
+  actions.className = "detail-actions";
+
+  const center = document.createElement("button");
+  center.className = "control";
+  center.textContent = "Center map";
+  center.addEventListener("click", () => {
+    map.setView([item.lat, item.lon], Math.max(map.getZoom(), 4));
+  });
+
+  const trail = document.createElement("button");
+  trail.className = "control";
+  trail.textContent = "Show trail";
+  trail.addEventListener("click", () => drawTrail(item));
+
+  actions.append(center, trail);
+  panel.appendChild(actions);
+
+  const note = document.createElement("div");
+  note.className = "small-note";
+  note.textContent = "Telemetry and orbit points are supplied by the data provider. Orbital inclination is not included in this feed.";
+  panel.appendChild(note);
 }
 
-function drawObjects(){
-  markerGroup.clear();
-  markerById.clear();
-  for(const obj of objects)makeMarker(obj);
-  updatePositions();
-  if(!selected&&objects.length)selectObject(objects[0].id);
+function selectObject(id) {
+  const item = objects.find(object => object.id === id);
+  if (!item) return;
+
+  selectedId = id;
+  renderMap();
+  renderList();
+  renderDetails(item);
+  drawTrail(item);
+
+  if (follow) {
+    map.panTo([item.lat, item.lon]);
+  }
 }
 
-function setStatus(text,state){
-  $('statusText').textContent=text;
-  $('statusDot').className='dot '+(state||'');
+async function loadData() {
+  if (loading) return;
+  loading = true;
+  $("refreshBtn").textContent = "Loading...";
+  setStatus("CONNECTING", false);
+
+  try {
+    const response = await fetch(API, {
+      method: "GET",
+      headers: { "Accept": "application/json" },
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("API returned HTTP " + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data)) {
+      throw new Error("Unexpected API response: expected a JSON array");
+    }
+
+    const normalized = data.map(normalize).filter(Boolean);
+
+    if (!normalized.length) {
+      throw new Error("The API returned no usable position records");
+    }
+
+    objects = normalized;
+    lastUpdated = new Date();
+
+    setStatus("LIVE", true);
+    $("updated").textContent = "Updated " + lastUpdated.toLocaleTimeString();
+
+    if (selectedId && objects.some(item => item.id === selectedId)) {
+      const selected = objects.find(item => item.id === selectedId);
+      renderDetails(selected);
+      drawTrail(selected);
+      if (follow) map.panTo([selected.lat, selected.lon]);
+    } else if (selectedId) {
+      selectedId = null;
+      trailLayer.clearLayers();
+      renderDetails(null);
+    }
+
+    renderMap();
+    renderList();
+
+  } catch (error) {
+    console.error("Space Tracker data error:", error);
+    setStatus("DATA ERROR", false, true);
+
+    $("updated").textContent = error.message.includes("Failed to fetch")
+      ? "Browser blocked the request"
+      : error.message;
+
+    if (!objects.length) {
+      $("objectCount").textContent = "Unable to load live data";
+      $("objectList").innerHTML =
+        '<div class="empty" style="padding:16px">Could not connect to the satellite feed.<br><br>' +
+        'If the browser reports a CORS or network error, the API is blocking this website from reading its data. Opening the API URL directly does not prove that JavaScript requests are allowed.</div>';
+    }
+  } finally {
+    loading = false;
+    $("refreshBtn").textContent = "Refresh";
+  }
 }
 
-$('objectRows').addEventListener('click',e=>{
-  const tr=e.target.closest('tr[data-id]');
-  if(tr)selectObject(tr.dataset.id);
+$("search").addEventListener("input", event => {
+  searchText = event.target.value.trim().toLowerCase();
+  renderList();
+  renderMap();
 });
-$('search').addEventListener('input',renderRows);
-$('filter').addEventListener('change',renderRows);
-$('rotateBtn').addEventListener('click',()=>{
-  rotate=!rotate;
-  controls.autoRotate=rotate;
-  $('rotateBtn').textContent=rotate?'Rotation on':'Rotation off';
-  $('rotateBtn').classList.toggle('active',rotate);
-});
-$('resetBtn').addEventListener('click',()=>{
-  camera.position.set(0,0,3.15);
-  controls.target.set(0,0,0);
-  controls.update();
-});
-function animate(){
-  requestAnimationFrame(animate);
-  controls.update();
-  renderer.render(scene,camera);
-}
-animate();
 
-setInterval(()=>{
-  $('clock').textContent=new Date().toISOString().slice(11,19)+' UTC';
-},1000);
-setInterval(updatePositions,1000);
+$("filters").addEventListener("click", event => {
+  const button = event.target.closest("[data-filter]");
+  if (!button) return;
 
-loadData().catch(e=>{
-  setStatus('CONNECTION FAILED','bad');
-  $('dataStamp').textContent='NO ORBITAL DATA';
-  $('tableMessage').className='message error';
-  $('tableMessage').textContent='Unable to load orbital data. '+e.message;
-  $('sourceInfo').innerHTML='DATA SOURCE<br>Connection failed. No simulated positions are being displayed.';
-  $('detailBody').innerHTML='<div class="detail-placeholder">No orbital elements received. Check your connection and try again later.</div>';
+  activeFilter = button.dataset.filter;
+
+  document.querySelectorAll(".filter").forEach(element => {
+    element.classList.toggle("active", element === button);
+  });
+
+  renderList();
+  renderMap();
 });
+
+$("worldBtn").addEventListener("click", () => {
+  map.setView([20, 0], 2);
+});
+
+$("followBtn").addEventListener("click", () => {
+  follow = !follow;
+  $("followBtn").textContent = "Follow: " + (follow ? "ON" : "OFF");
+
+  if (follow && selectedId) {
+    const item = objects.find(object => object.id === selectedId);
+    if (item) map.panTo([item.lat, item.lon]);
+  }
+});
+
+$("refreshBtn").addEventListener("click", loadData);
+
+loadData();
+setInterval(loadData, REFRESH_MS);
 </script>
 </body>
 </html>
