@@ -9,7 +9,7 @@
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:#101419;color:#e6e9ed;font-family:Arial,Helvetica,sans-serif;overflow:hidden}
-button,input,select{font:inherit}
+button,input{font:inherit}
 .topbar{height:58px;background:#171d24;border-bottom:1px solid #303943;display:flex;align-items:center;padding:0 20px;gap:22px}
 .brand{font-size:17px;font-weight:700;letter-spacing:2px}
 .brand span{color:#8cb9d8}
@@ -120,6 +120,7 @@ body{overflow:auto}
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+const CARTO_KEY = "cb1_5e6t_1_97d50199389ca4dc8f19c1b6";
 const API = "https://satellites.orbitingfrog.com/api/positions?group=visual";
 const REFRESH_MS = 30000;
 
@@ -129,11 +130,14 @@ const map = L.map("map", {
   maxZoom: 9
 }).setView([20, 0], 2);
 
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-  subdomains: "abcd",
-  maxZoom: 19
-}).addTo(map);
+L.tileLayer(
+  "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png?key=" + encodeURIComponent(CARTO_KEY),
+  {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: "abcd",
+    maxZoom: 19
+  }
+).addTo(map);
 
 const markerLayer = L.layerGroup().addTo(map);
 const trailLayer = L.layerGroup().addTo(map);
@@ -144,7 +148,6 @@ let activeFilter = "all";
 let searchText = "";
 let follow = false;
 let loading = false;
-let lastUpdated = null;
 
 const $ = id => document.getElementById(id);
 
@@ -156,7 +159,6 @@ function setStatus(text, live, error = false) {
 
 function classify(item) {
   const n = item.name.toLowerCase();
-
   if (/starlink/.test(n)) return "starlink";
   if (/gps|navstar/.test(n)) return "gps";
   if (/iss|tiangong|soyuz|space station|crew dragon/.test(n)) return "station";
@@ -188,8 +190,7 @@ function normalize(item) {
 
 function formatNumber(value, digits = 1) {
   return Number.isFinite(value) ? value.toLocaleString("en-US", {
-    maximumFractionDigits: digits,
-    minimumFractionDigits: 0
+    maximumFractionDigits: digits
   }) : "Not provided";
 }
 
@@ -224,14 +225,8 @@ function makeMarker(item) {
 
 function renderMap() {
   markerLayer.clearLayers();
-
-  const shown = visibleObjects();
-  for (const item of shown) {
+  for (const item of visibleObjects()) {
     makeMarker(item).addTo(markerLayer);
-  }
-
-  if (selectedId && !shown.some(item => item.id === selectedId)) {
-    trailLayer.clearLayers();
   }
 }
 
@@ -291,7 +286,6 @@ function renderList() {
 
 function drawTrail(item) {
   trailLayer.clearLayers();
-
   if (!item || !item.orbit.length) return;
 
   let segment = [];
@@ -310,7 +304,6 @@ function drawTrail(item) {
       if (segment.length > 1) segments.push(segment);
       segment = [];
     }
-
     segment.push([lat, lon]);
   }
 
@@ -405,9 +398,7 @@ function selectObject(id) {
   renderDetails(item);
   drawTrail(item);
 
-  if (follow) {
-    map.panTo([item.lat, item.lon]);
-  }
+  if (follow) map.panTo([item.lat, item.lon]);
 }
 
 async function loadData() {
@@ -423,27 +414,17 @@ async function loadData() {
       cache: "no-store"
     });
 
-    if (!response.ok) {
-      throw new Error("API returned HTTP " + response.status);
-    }
+    if (!response.ok) throw new Error("API returned HTTP " + response.status);
 
     const data = await response.json();
-
-    if (!Array.isArray(data)) {
-      throw new Error("Unexpected API response: expected a JSON array");
-    }
+    if (!Array.isArray(data)) throw new Error("Unexpected API response: expected a JSON array");
 
     const normalized = data.map(normalize).filter(Boolean);
-
-    if (!normalized.length) {
-      throw new Error("The API returned no usable position records");
-    }
+    if (!normalized.length) throw new Error("The API returned no usable position records");
 
     objects = normalized;
-    lastUpdated = new Date();
-
     setStatus("LIVE", true);
-    $("updated").textContent = "Updated " + lastUpdated.toLocaleTimeString();
+    $("updated").textContent = "Updated " + new Date().toLocaleTimeString();
 
     if (selectedId && objects.some(item => item.id === selectedId)) {
       const selected = objects.find(item => item.id === selectedId);
@@ -462,7 +443,6 @@ async function loadData() {
   } catch (error) {
     console.error("Space Tracker data error:", error);
     setStatus("DATA ERROR", false, true);
-
     $("updated").textContent = error.message.includes("Failed to fetch")
       ? "Browser blocked the request"
       : error.message;
@@ -471,7 +451,7 @@ async function loadData() {
       $("objectCount").textContent = "Unable to load live data";
       $("objectList").innerHTML =
         '<div class="empty" style="padding:16px">Could not connect to the satellite feed.<br><br>' +
-        'If the browser reports a CORS or network error, the API is blocking this website from reading its data. Opening the API URL directly does not prove that JavaScript requests are allowed.</div>';
+        'If the browser reports a CORS or network error, the API is blocking this website from reading its data. Opening the API URL directly does not prove JavaScript requests are allowed.</div>';
     }
   } finally {
     loading = false;
@@ -490,7 +470,6 @@ $("filters").addEventListener("click", event => {
   if (!button) return;
 
   activeFilter = button.dataset.filter;
-
   document.querySelectorAll(".filter").forEach(element => {
     element.classList.toggle("active", element === button);
   });
@@ -499,9 +478,7 @@ $("filters").addEventListener("click", event => {
   renderMap();
 });
 
-$("worldBtn").addEventListener("click", () => {
-  map.setView([20, 0], 2);
-});
+$("worldBtn").addEventListener("click", () => map.setView([20, 0], 2));
 
 $("followBtn").addEventListener("click", () => {
   follow = !follow;
