@@ -7,8 +7,8 @@
     <title>Space Tracker</title>
 
     <link
+        href="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css"
         rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     >
 
     <style>
@@ -39,8 +39,8 @@
         }
 
         .status {
-            font-size: 12px;
             color: #aab5c1;
+            font-size: 12px;
         }
 
         .status-dot {
@@ -71,14 +71,12 @@
         h2 {
             margin: 0 0 14px;
             font-size: 15px;
-            font-weight: 600;
         }
 
         h3 {
             margin: 20px 0 10px;
             color: #aab5c1;
             font-size: 12px;
-            font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.7px;
         }
@@ -164,15 +162,16 @@
         }
 
         #map {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            min-height: 300px;
             background: #171e26;
         }
 
         .map-status {
             position: absolute;
-            z-index: 500;
+            z-index: 5;
             bottom: 12px;
             left: 12px;
             padding: 8px 11px;
@@ -235,6 +234,38 @@
             font-size: 12px;
         }
 
+        .satellite-marker {
+            width: 11px;
+            height: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+            cursor: pointer;
+        }
+
+        .satellite-marker.selected {
+            width: 16px;
+            height: 16px;
+            border: 2px solid white;
+            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .maplibregl-ctrl-group {
+            background: #171e26 !important;
+        }
+
+        .maplibregl-ctrl-group button {
+            background-color: #171e26 !important;
+        }
+
+        .maplibregl-ctrl-group button span {
+            filter: invert(1);
+        }
+
+        .maplibregl-ctrl-attrib {
+            color: #222 !important;
+        }
+
         @media (max-width: 950px) {
             main {
                 grid-template-columns: 220px minmax(0, 1fr);
@@ -289,8 +320,8 @@
             <h2>Objects</h2>
 
             <input
-                type="text"
                 id="search"
+                type="text"
                 placeholder="Search name or NORAD ID..."
             >
 
@@ -342,7 +373,7 @@
         <section class="map-area">
             <div id="map"></div>
             <div class="map-status" id="mapStatus">
-                Loading map tiles...
+                Starting map...
             </div>
         </section>
 
@@ -357,105 +388,120 @@
         </aside>
     </main>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module">
+        import * as maplibregl from
+            "https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.mjs";
 
-    <script>
         const API_URL =
             "https://satellites.orbitingfrog.com/api/positions?group=visual";
 
         const REFRESH_INTERVAL = 15000;
 
-        const map = L.map("map", {
-            worldCopyJump: true,
-            zoomControl: true
-        }).setView([20, 0], 2);
+        const MAP_STYLES = [
+            "https://tiles.openfreemap.org/styles/dark",
+            "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
+        ];
 
         const mapStatus = document.getElementById("mapStatus");
+        const connectionStatus =
+            document.getElementById("connectionStatus");
 
-        let currentTileLayer = null;
-        let tileFailures = 0;
-        let tileSuccesses = 0;
-        let usingFallback = false;
+        let map;
+        let currentStyle = 0;
+        let styleLoaded = false;
+        let fallbackStarted = false;
+
+        let objects = [];
+        let markers = new Map();
+        let selectedId = null;
+        let selectedMarker = null;
+        let following = false;
+        let trailData = null;
 
         function setMapStatus(message) {
             mapStatus.textContent = message;
         }
 
-        function createTileLayer(url, attribution) {
-            return L.tileLayer(url, {
-                attribution: attribution,
-                maxZoom: 19,
-                crossOrigin: true
+        function startMap(styleIndex) {
+            currentStyle = styleIndex;
+            styleLoaded = false;
+
+            setMapStatus(
+                styleIndex === 0
+                    ? "Loading OpenFreeMap..."
+                    : "Trying alternate map..."
+            );
+
+            if (map) {
+                map.remove();
+            }
+
+            markers.clear();
+            selectedMarker = null;
+
+            map = new maplibregl.Map({
+                container: "map",
+                style: MAP_STYLES[styleIndex],
+                center: [0, 20],
+                zoom: 2,
+                minZoom: 1,
+                maxZoom: 18,
+                renderWorldCopies: true,
+                attributionControl: true
+            });
+
+            map.addControl(
+                new maplibregl.NavigationControl(),
+                "top-right"
+            );
+
+            map.on("load", function () {
+                styleLoaded = true;
+
+                setMapStatus(
+                    styleIndex === 0
+                        ? "Map loaded"
+                        : "Map loaded · Alternate provider"
+                );
+
+                addTrailLayer();
+                updateMarkers();
+            });
+
+            map.on("error", function (event) {
+                console.error("Map error:", event.error || event);
+
+                if (!styleLoaded && styleIndex === 0) {
+                    setMapStatus("Map service error. Trying another...");
+                }
+            });
+
+            map.on("style.load", function () {
+                addTrailLayer();
             });
         }
 
-        function useFallbackMap() {
-            if (usingFallback) {
+        function switchToFallback() {
+            if (fallbackStarted) {
                 return;
             }
 
-            usingFallback = true;
+            fallbackStarted = true;
 
-            if (currentTileLayer) {
-                map.removeLayer(currentTileLayer);
+            if (currentStyle === 0) {
+                startMap(1);
+            } else {
+                setMapStatus("Map providers could not load.");
             }
-
-            setMapStatus("Trying alternate map...");
-
-            currentTileLayer = createTileLayer(
-                "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-                "Tiles &copy; Esri, HERE, Garmin, USGS"
-            );
-
-            currentTileLayer.on("tileload", function () {
-                setMapStatus("Map loaded · Esri");
-            });
-
-            currentTileLayer.on("tileerror", function () {
-                setMapStatus("Map provider could not load tiles");
-            });
-
-            currentTileLayer.addTo(map);
         }
 
-        function startMap() {
-            currentTileLayer = createTileLayer(
-                "https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-                "&copy; OpenStreetMap contributors &copy; CARTO"
-            );
+        startMap(0);
 
-            currentTileLayer.on("tileload", function () {
-                tileSuccesses++;
-
-                if (!usingFallback) {
-                    setMapStatus("Map loaded · CARTO");
-                }
-            });
-
-            currentTileLayer.on("tileerror", function () {
-                tileFailures++;
-
-                if (tileFailures >= 4 && tileSuccesses === 0) {
-                    useFallbackMap();
-                }
-            });
-
-            currentTileLayer.addTo(map);
-
-            setTimeout(function () {
-                if (tileSuccesses === 0 && !usingFallback) {
-                    useFallbackMap();
-                }
-            }, 4000);
-        }
-
-        startMap();
-
-        let objects = [];
-        let markers = new Map();
-        let selectedId = null;
-        let trailLayer = null;
-        let following = false;
+        setTimeout(function () {
+            if (!styleLoaded) {
+                switchToFallback();
+            }
+        }, 10000);
 
         function getCategory(name) {
             const value = name.toLowerCase();
@@ -526,7 +572,8 @@
                 document.querySelectorAll(".filter-list input:checked")
             ).map(input => input.value);
 
-            const showAll = checked.includes("all");
+            const showAll =
+                checked.includes("all") || checked.length === 0;
 
             return objects.filter(object => {
                 const matchesSearch =
@@ -540,21 +587,21 @@
             });
         }
 
-        function makeMarker(object) {
-            const marker = L.circleMarker(
-                [object.lat, object.lon],
-                {
-                    radius: 5,
-                    color: object.color,
-                    fillColor: object.color,
-                    fillOpacity: 0.9,
-                    weight: 1
-                }
-            );
+        function createMarker(object) {
+            const element = document.createElement("div");
 
-            marker.bindTooltip(object.name);
+            element.className = "satellite-marker";
+            element.style.backgroundColor = object.color;
+            element.title = object.name;
 
-            marker.on("click", function () {
+            const marker = new maplibregl.Marker({
+                element: element,
+                anchor: "center"
+            })
+                .setLngLat([object.lon, object.lat])
+                .addTo(map);
+
+            element.addEventListener("click", function () {
                 selectObject(object.id);
             });
 
@@ -562,6 +609,10 @@
         }
 
         function updateMarkers() {
+            if (!map || !styleLoaded) {
+                return;
+            }
+
             const visibleObjects = getVisibleObjects();
 
             const visibleIds = new Set(
@@ -570,7 +621,7 @@
 
             for (const [id, marker] of markers) {
                 if (!visibleIds.has(id)) {
-                    map.removeLayer(marker);
+                    marker.remove();
                     markers.delete(id);
                 }
             }
@@ -586,16 +637,21 @@
                 let marker = markers.get(object.id);
 
                 if (!marker) {
-                    marker = makeMarker(object);
+                    marker = createMarker(object);
                     markers.set(object.id, marker);
-                    marker.addTo(map);
                 } else {
-                    marker.setLatLng([object.lat, object.lon]);
+                    marker.setLngLat([object.lon, object.lat]);
 
-                    marker.setStyle({
-                        color: object.color,
-                        fillColor: object.color
-                    });
+                    const element = marker.getElement();
+                    element.style.backgroundColor = object.color;
+                    element.title = object.name;
+                }
+
+                if (object.id === selectedId) {
+                    marker.getElement().classList.add("selected");
+                    selectedMarker = marker;
+                } else {
+                    marker.getElement().classList.remove("selected");
                 }
             }
 
@@ -608,6 +664,8 @@
                     showDetails(updated);
                 }
             }
+
+            updateList();
         }
 
         function updateList() {
@@ -669,6 +727,7 @@
 
             row.appendChild(left);
             row.appendChild(right);
+
             container.appendChild(row);
         }
 
@@ -689,21 +748,25 @@
             details.appendChild(id);
 
             addDetailRow(details, "Category", object.category);
+
             addDetailRow(
                 details,
                 "Latitude",
                 formatNumber(object.lat, 5) + "°"
             );
+
             addDetailRow(
                 details,
                 "Longitude",
                 formatNumber(object.lon, 5) + "°"
             );
+
             addDetailRow(
                 details,
                 "Altitude",
                 formatNumber(object.altitude) + " km"
             );
+
             addDetailRow(
                 details,
                 "Velocity",
@@ -714,6 +777,7 @@
             actions.className = "detail-actions";
 
             const followButton = document.createElement("button");
+
             followButton.textContent = following
                 ? "Stop following"
                 : "Follow object";
@@ -722,10 +786,11 @@
                 following = !following;
 
                 if (following) {
-                    map.setView(
-                        [object.lat, object.lon],
-                        Math.max(map.getZoom(), 4)
-                    );
+                    map.flyTo({
+                        center: [object.lon, object.lat],
+                        zoom: Math.max(map.getZoom(), 4),
+                        duration: 800
+                    });
                 }
 
                 showDetails(object);
@@ -762,18 +827,51 @@
             selectedId = object.id;
             following = false;
 
+            updateMarkers();
             updateList();
             showDetails(object);
 
-            map.setView(
-                [object.lat, object.lon],
-                Math.max(map.getZoom(), 4)
-            );
+            if (map && styleLoaded) {
+                map.flyTo({
+                    center: [object.lon, object.lat],
+                    zoom: Math.max(map.getZoom(), 4),
+                    duration: 800
+                });
+            }
+        }
+
+        function addTrailLayer() {
+            if (!map || !map.isStyleLoaded()) {
+                return;
+            }
+
+            if (!map.getSource("orbit-trail")) {
+                map.addSource("orbit-trail", {
+                    type: "geojson",
+                    data: {
+                        type: "FeatureCollection",
+                        features: []
+                    }
+                });
+
+                map.addLayer({
+                    id: "orbit-trail-line",
+                    type: "line",
+                    source: "orbit-trail",
+                    paint: {
+                        "line-color": "#f2b84b",
+                        "line-width": 2,
+                        "line-opacity": 0.85
+                    }
+                });
+            }
+
+            if (trailData) {
+                map.getSource("orbit-trail").setData(trailData);
+            }
         }
 
         function showTrail(object) {
-            clearTrail();
-
             const points = object.orbit
                 .filter(point =>
                     Array.isArray(point) &&
@@ -781,8 +879,8 @@
                     Number.isFinite(Number(point[1]))
                 )
                 .map(point => [
-                    Number(point[0]),
-                    Number(point[1])
+                    Number(point[1]),
+                    Number(point[0])
                 ]);
 
             if (points.length < 2) {
@@ -790,35 +888,60 @@
                 return;
             }
 
-            trailLayer = L.polyline(points, {
-                color: object.color,
-                weight: 2,
-                opacity: 0.85
-            }).addTo(map);
+            trailData = {
+                type: "FeatureCollection",
+                features: [{
+                    type: "Feature",
+                    properties: {},
+                    geometry: {
+                        type: "LineString",
+                        coordinates: points
+                    }
+                }]
+            };
 
-            map.fitBounds(trailLayer.getBounds(), {
-                padding: [35, 35]
+            addTrailLayer();
+
+            const longitudes = points.map(point => point[0]);
+            const latitudes = points.map(point => point[1]);
+
+            const bounds = [
+                [
+                    Math.min(...longitudes),
+                    Math.min(...latitudes)
+                ],
+                [
+                    Math.max(...longitudes),
+                    Math.max(...latitudes)
+                ]
+            ];
+
+            map.fitBounds(bounds, {
+                padding: 50,
+                maxZoom: 5
             });
 
             setMapStatus("Showing orbital trail");
         }
 
         function clearTrail() {
-            if (trailLayer) {
-                map.removeLayer(trailLayer);
-                trailLayer = null;
+            trailData = null;
+
+            if (map && map.getSource("orbit-trail")) {
+                map.getSource("orbit-trail").setData({
+                    type: "FeatureCollection",
+                    features: []
+                });
             }
 
-            if (usingFallback) {
-                setMapStatus("Map loaded · Esri");
-            } else {
-                setMapStatus("Map loaded · CARTO");
-            }
+            setMapStatus(
+                currentStyle === 0
+                    ? "Map loaded"
+                    : "Map loaded · Alternate provider"
+            );
         }
 
         async function loadObjects() {
-            const status = document.getElementById("connectionStatus");
-
             try {
                 const response = await fetch(API_URL, {
                     cache: "no-store"
@@ -844,18 +967,19 @@
                         Number.isFinite(object.lon)
                     );
 
-                updateMarkers();
-                updateList();
-
-                status.innerHTML =
+                connectionStatus.innerHTML =
                     '<span class="status-dot">●</span> Connected · ' +
                     objects.length.toLocaleString() +
                     " objects";
 
+                updateMarkers();
+                updateList();
+
             } catch (error) {
                 console.error("Satellite data error:", error);
 
-                status.textContent = "Satellite data unavailable";
+                connectionStatus.textContent =
+                    "Satellite data unavailable";
 
                 document.getElementById("objectList").innerHTML =
                     '<div class="loading">Could not load satellite data. Check the browser console for details.</div>';
@@ -865,8 +989,8 @@
         document.getElementById("search").addEventListener(
             "input",
             function () {
-                updateList();
                 updateMarkers();
+                updateList();
             }
         );
 
@@ -896,17 +1020,15 @@
                     }
                 }
 
-                updateList();
                 updateMarkers();
+                updateList();
             });
         });
 
-        map.whenReady(function () {
-            map.invalidateSize();
-        });
-
         window.addEventListener("resize", function () {
-            map.invalidateSize();
+            if (map) {
+                map.resize();
+            }
         });
 
         loadObjects();
@@ -914,7 +1036,7 @@
         setInterval(loadObjects, REFRESH_INTERVAL);
 
         setInterval(function () {
-            if (!following || !selectedId) {
+            if (!following || !selectedId || !map) {
                 return;
             }
 
@@ -923,10 +1045,7 @@
             );
 
             if (object) {
-                map.panTo(
-                    [object.lat, object.lon],
-                    { animate: true }
-                );
+                map.panTo([object.lon, object.lat]);
             }
         }, 2000);
     </script>
