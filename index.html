@@ -6,11 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Space Tracker</title>
 
-    <link
-        href="https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.css"
-        rel="stylesheet"
-    >
-
     <style>
         * {
             box-sizing: border-box;
@@ -18,7 +13,7 @@
 
         body {
             margin: 0;
-            background: #10151b;
+            background: #111820;
             color: #e5eaf0;
             font-family: Arial, sans-serif;
         }
@@ -28,9 +23,9 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 22px;
-            background: #171e26;
-            border-bottom: 1px solid #303943;
+            padding: 0 20px;
+            background: #19222c;
+            border-bottom: 1px solid #34404d;
         }
 
         .brand {
@@ -43,13 +38,9 @@
             font-size: 12px;
         }
 
-        .status-dot {
-            color: #68cf91;
-        }
-
         main {
             display: grid;
-            grid-template-columns: 260px minmax(0, 1fr) 280px;
+            grid-template-columns: 255px minmax(0, 1fr) 270px;
             height: calc(100vh - 58px);
         }
 
@@ -57,15 +48,15 @@
             min-height: 0;
             overflow-y: auto;
             padding: 16px;
-            background: #171e26;
+            background: #19222c;
         }
 
         .left-panel {
-            border-right: 1px solid #303943;
+            border-right: 1px solid #34404d;
         }
 
         .right-panel {
-            border-left: 1px solid #303943;
+            border-left: 1px solid #34404d;
         }
 
         h2 {
@@ -75,41 +66,40 @@
 
         h3 {
             margin: 20px 0 10px;
-            color: #aab5c1;
-            font-size: 12px;
+            color: #9eabb9;
+            font-size: 11px;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.7px;
-        }
-
-        input,
-        button {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #394550;
-            border-radius: 4px;
-            background: #111820;
-            color: #e5eaf0;
-            font-size: 13px;
+            letter-spacing: 0.8px;
         }
 
         input {
-            margin-bottom: 9px;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #3b4855;
+            border-radius: 4px;
+            background: #111820;
+            color: white;
+            font-size: 13px;
         }
 
         button {
-            cursor: pointer;
+            padding: 9px 12px;
+            border: 1px solid #465767;
+            border-radius: 4px;
             background: #263747;
-            border-color: #405568;
+            color: white;
+            cursor: pointer;
         }
 
         button:hover {
-            background: #334a60;
+            background: #354c60;
         }
 
         .filter-list {
             display: grid;
             gap: 10px;
-            color: #c5ced8;
+            color: #c4ced8;
             font-size: 13px;
         }
 
@@ -125,10 +115,15 @@
             margin: 0;
         }
 
+        .count {
+            margin: 12px 0;
+            color: #94a2b0;
+            font-size: 12px;
+        }
+
         .object-list {
             display: grid;
             gap: 5px;
-            margin-top: 12px;
         }
 
         .object-item {
@@ -140,46 +135,105 @@
         }
 
         .object-item:hover {
-            background: #222d38;
+            background: #25313d;
         }
 
         .object-item.selected {
-            background: #263747;
-            border-color: #506b82;
+            background: #293e50;
+            border-color: #58758d;
         }
 
         .object-item small {
             display: block;
             margin-top: 5px;
-            color: #8f9daa;
+            color: #91a0ae;
         }
 
         .map-area {
             position: relative;
             min-width: 0;
             min-height: 0;
-            background: #171e26;
+            overflow: hidden;
+            background: #101c29;
         }
 
-        #map {
-            position: absolute;
-            inset: 0;
+        #worldMap {
+            display: block;
             width: 100%;
             height: 100%;
-            background: #171e26;
+            background: #101c29;
+        }
+
+        .ocean {
+            fill: #101c29;
+        }
+
+        .land {
+            fill: #263b48;
+            stroke: #486071;
+            stroke-width: 1.3;
+            stroke-linejoin: round;
+        }
+
+        .grid-line {
+            fill: none;
+            stroke: #304352;
+            stroke-width: 0.8;
+            opacity: 0.65;
+        }
+
+        .equator {
+            stroke: #607587;
+            opacity: 0.6;
+        }
+
+        .satellite {
+            cursor: pointer;
+            stroke: #ffffff;
+            stroke-width: 1.2;
+        }
+
+        .satellite.selected {
+            stroke: white;
+            stroke-width: 3;
+        }
+
+        .satellite:hover {
+            stroke-width: 3;
+        }
+
+        .trail {
+            fill: none;
+            stroke: #f2b84b;
+            stroke-width: 2;
+            stroke-dasharray: 5 4;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            display: grid;
+            gap: 5px;
+        }
+
+        .map-controls button {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            background: #192631;
+            font-size: 18px;
         }
 
         .map-status {
             position: absolute;
-            z-index: 5;
             bottom: 12px;
             left: 12px;
             padding: 8px 11px;
             border-radius: 4px;
-            background: rgba(20, 27, 35, 0.92);
+            background: #192631;
             color: #dce5ed;
             font-size: 12px;
-            pointer-events: none;
         }
 
         .detail-empty,
@@ -196,7 +250,7 @@
         }
 
         .detail-id {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             color: #91a0ae;
             font-size: 12px;
         }
@@ -206,7 +260,7 @@
             justify-content: space-between;
             gap: 10px;
             padding: 11px 0;
-            border-bottom: 1px solid #303943;
+            border-bottom: 1px solid #34404d;
             font-size: 13px;
         }
 
@@ -224,46 +278,8 @@
             margin-top: 18px;
         }
 
-        .secondary {
-            background: #171e26;
-        }
-
-        .count {
-            margin-top: 12px;
-            color: #91a0ae;
-            font-size: 12px;
-        }
-
-        .satellite-marker {
-            width: 11px;
-            height: 11px;
-            border: 1px solid rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
-            box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
-            cursor: pointer;
-        }
-
-        .satellite-marker.selected {
-            width: 16px;
-            height: 16px;
-            border: 2px solid white;
-            box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.2);
-        }
-
-        .maplibregl-ctrl-group {
-            background: #171e26 !important;
-        }
-
-        .maplibregl-ctrl-group button {
-            background-color: #171e26 !important;
-        }
-
-        .maplibregl-ctrl-group button span {
-            filter: invert(1);
-        }
-
-        .maplibregl-ctrl-attrib {
-            color: #222 !important;
+        .detail-actions button {
+            width: 100%;
         }
 
         @media (max-width: 950px) {
@@ -277,27 +293,18 @@
         }
 
         @media (max-width: 650px) {
-            header {
-                padding: 0 12px;
-            }
-
             main {
                 grid-template-columns: 1fr;
                 grid-template-rows: 230px minmax(0, 1fr);
-                height: calc(100vh - 58px);
             }
 
             .left-panel {
                 border-right: none;
-                border-bottom: 1px solid #303943;
+                border-bottom: 1px solid #34404d;
             }
 
             .map-area {
                 grid-row: 2;
-            }
-
-            aside {
-                padding: 12px;
             }
 
             .object-list {
@@ -310,9 +317,7 @@
 <body>
     <header>
         <div class="brand">Space Tracker</div>
-        <div class="status" id="connectionStatus">
-            Connecting...
-        </div>
+        <div class="status" id="connectionStatus">Starting...</div>
     </header>
 
     <main>
@@ -362,18 +367,119 @@
             <h3>Tracked objects</h3>
 
             <div class="count" id="objectCount">
-                Loading objects...
+                Waiting for data...
             </div>
 
             <div class="object-list" id="objectList">
-                <div class="loading">Loading satellite data...</div>
+                <div class="loading">Loading objects...</div>
             </div>
         </aside>
 
         <section class="map-area">
-            <div id="map"></div>
+            <svg
+                id="worldMap"
+                viewBox="0 0 1200 600"
+                preserveAspectRatio="xMidYMid meet"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <rect class="ocean" width="1200" height="600"/>
+
+                <g id="grid"></g>
+
+                <g id="continents">
+                    <path class="land" d="
+                        M 80,105
+                        L 115,75 165,65 195,82 230,75
+                        255,95 290,100 315,125 300,155
+                        275,166 260,190 240,205 225,230
+                        205,250 190,275 170,270 160,245
+                        145,225 130,195 110,180 100,150
+                        75,135 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 270,275
+                        L 300,285 320,315 325,350
+                        310,390 300,425 285,460
+                        270,490 250,475 245,445
+                        235,420 240,390 225,360
+                        230,330 245,300 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 490,110
+                        L 530,90 575,95 610,110
+                        650,105 680,120 720,110
+                        750,125 785,120 820,135
+                        860,125 900,140 935,155
+                        965,180 950,205 920,210
+                        890,195 865,205 840,225
+                        810,220 785,245 760,255
+                        740,280 715,285 700,260
+                        680,240 660,220 630,210
+                        610,185 580,170 550,155
+                        520,145 495,130 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 530,220
+                        L 560,225 585,245 600,275
+                        610,310 595,345 580,380
+                        555,420 530,440 510,415
+                        500,380 490,350 495,315
+                        505,280 515,245 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 880,285
+                        L 920,275 960,285 995,300
+                        1030,315 1060,340 1080,370
+                        1060,390 1030,380 1000,395
+                        970,380 940,365 915,345
+                        890,330 875,305 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 1010,115
+                        L 1040,100 1070,110 1095,130
+                        1120,155 1105,180 1080,185
+                        1050,170 1025,150 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 1060,420
+                        L 1090,410 1115,430 1105,455
+                        1080,465 1055,450 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 380,70
+                        L 405,55 425,65 415,85 390,90 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 445,500
+                        L 470,495 490,505 475,520 450,515 Z
+                    "/>
+
+                    <path class="land" d="
+                        M 0,560
+                        L 1200,560 1200,600 0,600 Z
+                    " opacity="0.25"/>
+                </g>
+
+                <g id="trailGroup"></g>
+                <g id="markerGroup"></g>
+            </svg>
+
+            <div class="map-controls">
+                <button id="zoomIn" title="Zoom in">+</button>
+                <button id="zoomOut" title="Zoom out">−</button>
+                <button id="resetZoom" title="Reset view">⌂</button>
+            </div>
+
             <div class="map-status" id="mapStatus">
-                Starting map...
+                World map ready
             </div>
         </section>
 
@@ -382,126 +488,106 @@
 
             <div id="details">
                 <div class="detail-empty">
-                    Select an object on the map or from the list to see its information.
+                    Select a satellite to see its information.
                 </div>
             </div>
         </aside>
     </main>
 
-    <script type="module">
-        import * as maplibregl from
-            "https://unpkg.com/maplibre-gl@6.11.2/dist/maplibre-gl.mjs";
-
+    <script>
         const API_URL =
             "https://satellites.orbitingfrog.com/api/positions?group=visual";
 
         const REFRESH_INTERVAL = 15000;
 
-        const MAP_STYLES = [
-            "https://tiles.openfreemap.org/styles/dark",
-            "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json"
-        ];
+        const svgNS = "http://www.w3.org/2000/svg";
 
-        const mapStatus = document.getElementById("mapStatus");
-        const connectionStatus =
-            document.getElementById("connectionStatus");
-
-        let map;
-        let currentStyle = 0;
-        let styleLoaded = false;
-        let fallbackStarted = false;
+        const grid = document.getElementById("grid");
+        const markerGroup = document.getElementById("markerGroup");
+        const trailGroup = document.getElementById("trailGroup");
 
         let objects = [];
-        let markers = new Map();
         let selectedId = null;
-        let selectedMarker = null;
+        let markers = new Map();
         let following = false;
-        let trailData = null;
+        let zoom = 1;
+        let centerX = 600;
+        let centerY = 300;
 
-        function setMapStatus(message) {
-            mapStatus.textContent = message;
+        function setStatus(message) {
+            document.getElementById("mapStatus").textContent = message;
         }
 
-        function startMap(styleIndex) {
-            currentStyle = styleIndex;
-            styleLoaded = false;
+        function project(lat, lon) {
+            return {
+                x: (lon + 180) * (1200 / 360),
+                y: (90 - lat) * (600 / 180)
+            };
+        }
 
-            setMapStatus(
-                styleIndex === 0
-                    ? "Loading OpenFreeMap..."
-                    : "Trying alternate map..."
-            );
+        function drawGrid() {
+            grid.innerHTML = "";
 
-            if (map) {
-                map.remove();
+            for (let lon = -180; lon <= 180; lon += 30) {
+                const point = project(0, lon);
+
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", point.x);
+                line.setAttribute("x2", point.x);
+                line.setAttribute("y1", 0);
+                line.setAttribute("y2", 600);
+                line.setAttribute("class", "grid-line");
+
+                grid.appendChild(line);
             }
 
-            markers.clear();
-            selectedMarker = null;
+            for (let lat = -60; lat <= 60; lat += 30) {
+                const point = project(lat, 0);
 
-            map = new maplibregl.Map({
-                container: "map",
-                style: MAP_STYLES[styleIndex],
-                center: [0, 20],
-                zoom: 2,
-                minZoom: 1,
-                maxZoom: 18,
-                renderWorldCopies: true,
-                attributionControl: true
-            });
+                const line = document.createElementNS(svgNS, "line");
+                line.setAttribute("x1", 0);
+                line.setAttribute("x2", 1200);
+                line.setAttribute("y1", point.y);
+                line.setAttribute("y2", point.y);
+                line.setAttribute("class", "grid-line");
 
-            map.addControl(
-                new maplibregl.NavigationControl(),
-                "top-right"
-            );
-
-            map.on("load", function () {
-                styleLoaded = true;
-
-                setMapStatus(
-                    styleIndex === 0
-                        ? "Map loaded"
-                        : "Map loaded · Alternate provider"
-                );
-
-                addTrailLayer();
-                updateMarkers();
-            });
-
-            map.on("error", function (event) {
-                console.error("Map error:", event.error || event);
-
-                if (!styleLoaded && styleIndex === 0) {
-                    setMapStatus("Map service error. Trying another...");
+                if (lat === 0) {
+                    line.classList.add("equator");
                 }
-            });
 
-            map.on("style.load", function () {
-                addTrailLayer();
-            });
-        }
-
-        function switchToFallback() {
-            if (fallbackStarted) {
-                return;
-            }
-
-            fallbackStarted = true;
-
-            if (currentStyle === 0) {
-                startMap(1);
-            } else {
-                setMapStatus("Map providers could not load.");
+                grid.appendChild(line);
             }
         }
 
-        startMap(0);
+        function updateView() {
+            const width = 1200 / zoom;
+            const height = 600 / zoom;
 
-        setTimeout(function () {
-            if (!styleLoaded) {
-                switchToFallback();
-            }
-        }, 10000);
+            const x = centerX - width / 2;
+            const y = centerY - height / 2;
+
+            document.getElementById("worldMap").setAttribute(
+                "viewBox",
+                `${x} ${y} ${width} ${height}`
+            );
+        }
+
+        document.getElementById("zoomIn").addEventListener("click", function () {
+            zoom = Math.min(zoom * 1.5, 6);
+            updateView();
+        });
+
+        document.getElementById("zoomOut").addEventListener("click", function () {
+            zoom = Math.max(zoom / 1.5, 1);
+            updateView();
+        });
+
+        document.getElementById("resetZoom").addEventListener("click", function () {
+            zoom = 1;
+            centerX = 600;
+            centerY = 300;
+            updateView();
+        });
 
         function getCategory(name) {
             const value = name.toLowerCase();
@@ -545,7 +631,7 @@
                 lon: Number(item.lon),
                 altitude: Number(item.alt),
                 velocity: Number(item.velocity),
-                color: item.color || "#4d9bd3",
+                color: item.color || "#54a9df",
                 orbit: Array.isArray(item.orbit) ? item.orbit : [],
                 category: getCategory(String(item.name || ""))
             };
@@ -587,85 +673,46 @@
             });
         }
 
-        function createMarker(object) {
-            const element = document.createElement("div");
-
-            element.className = "satellite-marker";
-            element.style.backgroundColor = object.color;
-            element.title = object.name;
-
-            const marker = new maplibregl.Marker({
-                element: element,
-                anchor: "center"
-            })
-                .setLngLat([object.lon, object.lat])
-                .addTo(map);
-
-            element.addEventListener("click", function () {
-                selectObject(object.id);
-            });
-
-            return marker;
-        }
-
-        function updateMarkers() {
-            if (!map || !styleLoaded) {
-                return;
-            }
+        function drawMarkers() {
+            markerGroup.innerHTML = "";
+            markers.clear();
 
             const visibleObjects = getVisibleObjects();
 
-            const visibleIds = new Set(
-                visibleObjects.map(object => object.id)
-            );
-
-            for (const [id, marker] of markers) {
-                if (!visibleIds.has(id)) {
-                    marker.remove();
-                    markers.delete(id);
-                }
-            }
-
-            for (const object of visibleObjects) {
+            visibleObjects.forEach(object => {
                 if (
                     !Number.isFinite(object.lat) ||
                     !Number.isFinite(object.lon)
                 ) {
-                    continue;
+                    return;
                 }
 
-                let marker = markers.get(object.id);
+                const position = project(object.lat, object.lon);
 
-                if (!marker) {
-                    marker = createMarker(object);
-                    markers.set(object.id, marker);
-                } else {
-                    marker.setLngLat([object.lon, object.lat]);
+                const circle = document.createElementNS(svgNS, "circle");
 
-                    const element = marker.getElement();
-                    element.style.backgroundColor = object.color;
-                    element.title = object.name;
-                }
-
-                if (object.id === selectedId) {
-                    marker.getElement().classList.add("selected");
-                    selectedMarker = marker;
-                } else {
-                    marker.getElement().classList.remove("selected");
-                }
-            }
-
-            if (selectedId) {
-                const updated = objects.find(
-                    object => object.id === selectedId
+                circle.setAttribute("cx", position.x);
+                circle.setAttribute("cy", position.y);
+                circle.setAttribute("r", selectedId === object.id ? 6 : 4);
+                circle.setAttribute("fill", object.color);
+                circle.setAttribute(
+                    "class",
+                    selectedId === object.id
+                        ? "satellite selected"
+                        : "satellite"
                 );
 
-                if (updated) {
-                    showDetails(updated);
-                }
-            }
+                const title = document.createElementNS(svgNS, "title");
+                title.textContent = object.name;
+                circle.appendChild(title);
 
-            updateList();
+                circle.addEventListener("click", function () {
+                    selectObject(object.id);
+                });
+
+                markerGroup.appendChild(circle);
+                markers.set(object.id, circle);
+            });
         }
 
         function updateList() {
@@ -727,7 +774,6 @@
 
             row.appendChild(left);
             row.appendChild(right);
-
             container.appendChild(row);
         }
 
@@ -748,36 +794,15 @@
             details.appendChild(id);
 
             addDetailRow(details, "Category", object.category);
-
-            addDetailRow(
-                details,
-                "Latitude",
-                formatNumber(object.lat, 5) + "°"
-            );
-
-            addDetailRow(
-                details,
-                "Longitude",
-                formatNumber(object.lon, 5) + "°"
-            );
-
-            addDetailRow(
-                details,
-                "Altitude",
-                formatNumber(object.altitude) + " km"
-            );
-
-            addDetailRow(
-                details,
-                "Velocity",
-                formatNumber(object.velocity, 3) + " km/s"
-            );
+            addDetailRow(details, "Latitude", formatNumber(object.lat, 5) + "°");
+            addDetailRow(details, "Longitude", formatNumber(object.lon, 5) + "°");
+            addDetailRow(details, "Altitude", formatNumber(object.altitude) + " km");
+            addDetailRow(details, "Velocity", formatNumber(object.velocity, 3) + " km/s");
 
             const actions = document.createElement("div");
             actions.className = "detail-actions";
 
             const followButton = document.createElement("button");
-
             followButton.textContent = following
                 ? "Stop following"
                 : "Follow object";
@@ -786,29 +811,29 @@
                 following = !following;
 
                 if (following) {
-                    map.flyTo({
-                        center: [object.lon, object.lat],
-                        zoom: Math.max(map.getZoom(), 4),
-                        duration: 800
-                    });
+                    centerX = project(object.lat, object.lon).x;
+                    centerY = project(object.lat, object.lon).y;
+                    zoom = Math.max(zoom, 2);
+                    updateView();
                 }
 
                 showDetails(object);
             });
 
             const trailButton = document.createElement("button");
-            trailButton.className = "secondary";
             trailButton.textContent = "Show orbital trail";
 
             trailButton.addEventListener("click", function () {
-                showTrail(object);
+                drawTrail(object);
             });
 
             const clearButton = document.createElement("button");
-            clearButton.className = "secondary";
             clearButton.textContent = "Clear trail";
 
-            clearButton.addEventListener("click", clearTrail);
+            clearButton.addEventListener("click", function () {
+                trailGroup.innerHTML = "";
+                setStatus("World map ready");
+            });
 
             actions.appendChild(followButton);
             actions.appendChild(trailButton);
@@ -827,136 +852,64 @@
             selectedId = object.id;
             following = false;
 
-            updateMarkers();
+            const position = project(object.lat, object.lon);
+
+            centerX = position.x;
+            centerY = position.y;
+            zoom = Math.max(zoom, 2);
+
+            updateView();
+            drawMarkers();
             updateList();
             showDetails(object);
-
-            if (map && styleLoaded) {
-                map.flyTo({
-                    center: [object.lon, object.lat],
-                    zoom: Math.max(map.getZoom(), 4),
-                    duration: 800
-                });
-            }
         }
 
-        function addTrailLayer() {
-            if (!map || !map.isStyleLoaded()) {
-                return;
-            }
+        function drawTrail(object) {
+            trailGroup.innerHTML = "";
 
-            if (!map.getSource("orbit-trail")) {
-                map.addSource("orbit-trail", {
-                    type: "geojson",
-                    data: {
-                        type: "FeatureCollection",
-                        features: []
-                    }
-                });
-
-                map.addLayer({
-                    id: "orbit-trail-line",
-                    type: "line",
-                    source: "orbit-trail",
-                    paint: {
-                        "line-color": "#f2b84b",
-                        "line-width": 2,
-                        "line-opacity": 0.85
-                    }
-                });
-            }
-
-            if (trailData) {
-                map.getSource("orbit-trail").setData(trailData);
-            }
-        }
-
-        function showTrail(object) {
             const points = object.orbit
                 .filter(point =>
                     Array.isArray(point) &&
                     Number.isFinite(Number(point[0])) &&
                     Number.isFinite(Number(point[1]))
                 )
-                .map(point => [
-                    Number(point[1]),
-                    Number(point[0])
-                ]);
+                .map(point => project(Number(point[0]), Number(point[1])));
 
             if (points.length < 2) {
-                setMapStatus("No orbital trail data available");
+                setStatus("No orbital trail data available");
                 return;
             }
 
-            trailData = {
-                type: "FeatureCollection",
-                features: [{
-                    type: "Feature",
-                    properties: {},
-                    geometry: {
-                        type: "LineString",
-                        coordinates: points
-                    }
-                }]
-            };
+            const polyline = document.createElementNS(svgNS, "polyline");
 
-            addTrailLayer();
-
-            const longitudes = points.map(point => point[0]);
-            const latitudes = points.map(point => point[1]);
-
-            const bounds = [
-                [
-                    Math.min(...longitudes),
-                    Math.min(...latitudes)
-                ],
-                [
-                    Math.max(...longitudes),
-                    Math.max(...latitudes)
-                ]
-            ];
-
-            map.fitBounds(bounds, {
-                padding: 50,
-                maxZoom: 5
-            });
-
-            setMapStatus("Showing orbital trail");
-        }
-
-        function clearTrail() {
-            trailData = null;
-
-            if (map && map.getSource("orbit-trail")) {
-                map.getSource("orbit-trail").setData({
-                    type: "FeatureCollection",
-                    features: []
-                });
-            }
-
-            setMapStatus(
-                currentStyle === 0
-                    ? "Map loaded"
-                    : "Map loaded · Alternate provider"
+            polyline.setAttribute(
+                "points",
+                points.map(point => `${point.x},${point.y}`).join(" ")
             );
+
+            polyline.setAttribute("class", "trail");
+
+            trailGroup.appendChild(polyline);
+
+            setStatus("Showing orbital trail");
         }
 
         async function loadObjects() {
+            const status = document.getElementById("connectionStatus");
+
             try {
                 const response = await fetch(API_URL, {
                     cache: "no-store"
                 });
 
                 if (!response.ok) {
-                    throw new Error(
-                        "Server returned " + response.status
-                    );
+                    throw new Error("HTTP " + response.status);
                 }
 
                 const data = await response.json();
 
                 if (!Array.isArray(data)) {
-                    throw new Error("Unexpected satellite data format");
+                    throw new Error("Unexpected data format");
                 }
 
                 objects = data
@@ -967,29 +920,36 @@
                         Number.isFinite(object.lon)
                     );
 
-                connectionStatus.innerHTML =
-                    '<span class="status-dot">●</span> Connected · ' +
+                status.innerHTML =
+                    '<span style="color:#68cf91">●</span> Connected · ' +
                     objects.length.toLocaleString() +
                     " objects";
 
-                updateMarkers();
+                drawMarkers();
                 updateList();
+
+                setStatus("World map ready · Satellite data loaded");
 
             } catch (error) {
                 console.error("Satellite data error:", error);
 
-                connectionStatus.textContent =
-                    "Satellite data unavailable";
+                status.innerHTML =
+                    '<span style="color:#e58b80">●</span> Data unavailable';
+
+                document.getElementById("objectCount").textContent =
+                    "Satellite feed unavailable";
 
                 document.getElementById("objectList").innerHTML =
-                    '<div class="loading">Could not load satellite data. Check the browser console for details.</div>';
+                    '<div class="loading">Could not load satellite data. The world map is still available.</div>';
+
+                setStatus("World map ready · Waiting for satellite data");
             }
         }
 
         document.getElementById("search").addEventListener(
             "input",
             function () {
-                updateMarkers();
+                drawMarkers();
                 updateList();
             }
         );
@@ -1020,23 +980,19 @@
                     }
                 }
 
-                updateMarkers();
+                drawMarkers();
                 updateList();
             });
         });
 
-        window.addEventListener("resize", function () {
-            if (map) {
-                map.resize();
-            }
-        });
-
+        drawGrid();
+        updateView();
         loadObjects();
 
         setInterval(loadObjects, REFRESH_INTERVAL);
 
         setInterval(function () {
-            if (!following || !selectedId || !map) {
+            if (!following || !selectedId) {
                 return;
             }
 
@@ -1045,7 +1001,12 @@
             );
 
             if (object) {
-                map.panTo([object.lon, object.lat]);
+                const position = project(object.lat, object.lon);
+
+                centerX = position.x;
+                centerY = position.y;
+
+                updateView();
             }
         }, 2000);
     </script>
